@@ -125,15 +125,7 @@ const Footer = () => {
                                         <p className="text-blue-300/60 text-xs">{t('footer.sea_view')}</p>
                                     </div>
                                 </li>
-                                <li className="flex items-start gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                        <Check className="w-4 h-4 text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-white text-sm font-semibold">{t('footer.accommodation')}</p>
-                                        <p className="text-blue-300/60 text-xs">{t('footer.night')}</p>
-                                    </div>
-                                </li>
+
                             </ul>
                         </div>
 

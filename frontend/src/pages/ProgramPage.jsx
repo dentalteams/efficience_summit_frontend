@@ -19,23 +19,43 @@ const ProgramCard = ({ item, index }) => {
 
     return (
         <div className="group relative mb-8 animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
-            <div className="absolute left-0 md:left-24 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-slate-700 to-transparent ml-4 md:ml-0 hidden md:block"></div>
+            <div className="absolute left-0 md:left-32 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-slate-700 to-transparent ml-4 md:ml-0 hidden md:block"></div>
 
             <div className="flex flex-col md:flex-row items-start md:items-center">
-                <div className="hidden md:flex flex-col items-end w-24 pr-8 text-right shrink-0">
-                    <span className="text-2xl font-black text-white">{item.time}</span>
-                    <span className="text-xs font-bold text-blue-400 uppercase tracking-widest">{item.type}</span>
-                </div>
+                {item.time ? (
+                    <div className="hidden md:flex flex-col items-end w-32 pr-10 text-right shrink-0">
+                        {item.time.includes(' - ') ? (
+                            <>
+                                <span className="text-3xl font-black text-white leading-none mb-1 tracking-tighter">
+                                    {item.time.split(' - ')[0]}
+                                </span>
+                                <div className="flex items-center justify-end gap-2 text-slate-500">
+                                    <div className="w-4 h-[1px] bg-slate-800"></div>
+                                    <span className="text-sm font-bold tracking-widest">{item.time.split(' - ')[1]}</span>
+                                </div>
+                            </>
+                        ) : (
+                            <span className="text-3xl font-black text-white tracking-tighter">{item.time}</span>
+                        )}
+                    </div>
+                ) : (
+                    <div className="hidden md:flex w-32 shrink-0"></div>
+                )}
 
 
-                <div className="flex md:hidden items-center space-x-3 mb-4 w-full bg-slate-900/50 p-3 rounded-xl border border-slate-800">
-                    <Clock className="w-5 h-5 text-blue-400" />
-                    <span className="text-xl font-black text-white">{item.time}</span>
-                    <span className="text-xs font-bold text-blue-400 uppercase tracking-widest ml-auto">{item.type}</span>
-                </div>
+                {/* Mobile view time band */}
+                {item.time && (
+                    <div className="flex md:hidden items-center space-x-3 mb-4 w-full bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                        <Clock className="w-5 h-5 text-blue-400" />
+                        <span className="text-xl font-black text-white">{item.time}</span>
+                        <span className="text-xs font-bold text-blue-400 uppercase tracking-widest ml-auto">{item.type}</span>
+                    </div>
+                )}
 
 
-                <div className="hidden md:flex absolute left-24 -translate-x-1/2 w-4 h-4 bg-slate-950 border-2 border-blue-500 rounded-full z-10 group-hover:scale-150 group-hover:bg-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                {item.time && (
+                    <div className="hidden md:flex absolute left-32 -translate-x-1/2 w-4 h-4 bg-slate-950 border-2 border-blue-500 rounded-full z-10 group-hover:scale-150 group-hover:bg-blue-500 transition-all duration-300 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                )}
 
                 <div className="flex-1 w-full bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-900/80 backdrop-blur-xl border border-slate-800/50 rounded-2xl p-6 md:ml-12 hover:border-blue-500/30 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/5 group-hover:-translate-y-1">
                     <div className="flex items-start md:items-center justify-between gap-4">
@@ -77,16 +97,14 @@ const ProgramPage = () => {
             label: t('program.day1_label'),
             theme: t('program.day1_theme'),
             schedule: [
-                { time: "08:30", title: t('program.d1_s1_title'), description: t('program.d1_s1_desc'), type: "Reception", icon: "Users" },
-                { time: "09:00", title: t('program.d1_s2_title'), description: t('program.d1_s2_desc'), type: "Conférence", icon: "Users" },
-                { time: "10:30", title: t('program.d1_s3_title'), description: t('program.d1_s3_desc'), type: "Pause", icon: "Coffee" },
-                { time: "11:00", title: t('program.d1_s4_title'), description: t('program.d1_s4_desc'), type: "Conférence", icon: "Zap" },
-                { time: "12:30", title: t('program.d1_s5_title'), description: t('program.d1_s5_desc'), type: "Repas", icon: "Utensils" },
-                { time: "14:30", title: t('program.d1_s6_title'), description: t('program.d1_s6_desc'), type: "Conférence", icon: "Monitor" },
-
-                { time: "16:00", title: t('program.d1_s8_title'), description: t('program.d1_s8_desc'), type: "Pause", icon: "Coffee" },
-                { time: "16:30", title: t('program.d1_s9_title'), description: t('program.d1_s9_desc'), type: "Conférence", icon: "ShieldCheck" },
-                { time: "18:00", title: t('program.d1_s10_title'), description: t('program.d1_s10_desc'), type: "Social", icon: "Users" }
+                { time: "08h30 - 09h00", title: t('program.d1_s0_title'), description: t('program.d1_s0_desc'), type: "Reception", icon: "Users" },
+                { time: "09h00 - 10h30", title: t('program.d1_s1_title'), description: t('program.d1_s1_desc'), type: "Conférence", icon: "Users" },
+                { time: "10h30 - 11h00", title: t('program.d1_s2_title'), description: t('program.d1_s2_desc'), type: "Pause", icon: "Coffee" },
+                { time: "11h00 - 12h30", title: t('program.d1_s3_title'), description: t('program.d1_s3_desc'), type: "Conférence", icon: "Zap" },
+                { time: "12h30 - 14h30", title: t('program.d1_s4_title'), description: t('program.d1_s4_desc'), type: "Repas", icon: "Utensils" },
+                { time: "14h30 - 16h00", title: t('program.d1_s5_title'), description: t('program.d1_s5_desc'), type: "Conférence", icon: "Monitor" },
+                { time: "16h00 - 16h30", title: t('program.d1_s6_title'), description: t('program.d1_s6_desc'), type: "Pause", icon: "Coffee" },
+                { time: "16h30 - 18h00", title: t('program.d1_s7_title'), description: t('program.d1_s7_desc'), type: "Conférence", icon: "ShieldCheck" }
             ]
         },
         day2: {
@@ -94,13 +112,13 @@ const ProgramPage = () => {
             label: t('program.day2_label'),
             theme: t('program.day2_theme'),
             schedule: [
-                { time: "09:00", title: t('program.d2_s1_title'), description: t('program.d2_s1_desc'), type: "Conférence", icon: "TrendingUp" },
-                { time: "10:30", title: t('program.d2_s2_title'), description: t('program.d2_s2_desc'), type: "Pause", icon: "Coffee" },
-
-                { time: "16:00", title: t('program.d2_s7_title'), description: t('program.d2_s7_desc'), type: "Conférence", icon: "ShieldCheck" },
-                { time: "14:30", title: t('program.d2_s6_title'), description: t('program.d2_s6_desc'), type: "Challenge", icon: "Trophy" },
-
-                { time: "17:00", title: t('program.d2_s8_title'), description: t('program.d2_s8_desc'), type: "Cérémonie", icon: "Star" }
+                { time: "09h00 - 10h30", title: t('program.d2_s1_title'), description: t('program.d2_s1_desc'), type: "Conférence", icon: "TrendingUp" },
+                { time: "10h30 - 11h00", title: t('program.d2_s2_title'), description: t('program.d2_s2_desc'), type: "Pause", icon: "Coffee" },
+                { time: "11h00 - 12h30", title: t('program.d2_s3_title'), description: t('program.d2_s3_desc'), type: "Conférence", icon: "Zap" },
+                { time: "14h30 - 16h00", title: t('program.d2_s4_title'), description: t('program.d2_s4_desc'), type: "Conférence", icon: "Users" },
+                { title: t('program.d2_s5_title'), description: t('program.d2_s5_desc'), type: "Challenge", icon: "Trophy" },
+                { time: "16h00 - 16h30", title: t('program.d2_s6_title'), description: t('program.d2_s6_desc'), type: "Repas", icon: "Utensils" },
+                { time: "16h30 - 17h00", title: t('program.d2_s7_title'), description: t('program.d2_s7_desc'), type: "Cérémonie", icon: "Award" }
             ]
         }
     };

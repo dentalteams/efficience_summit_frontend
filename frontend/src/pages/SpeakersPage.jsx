@@ -4,23 +4,25 @@ import { useTranslation } from 'react-i18next';
 import Footer from '../components/Footer';
 
 const SpeakerCard = ({ speaker, index }) => {
+    const [isGray, setIsGray] = useState(false);
 
     return (
         <div
-            className="group relative animate-fade-in-up h-full"
+            className="group relative animate-fade-in-up h-full cursor-pointer"
             style={{ animationDelay: `${index * 100}ms` }}
+            onClick={() => setIsGray(!isGray)}
         >
 
             <div className={`absolute -inset-4 bg-gradient-to-br ${speaker.color} opacity-0 group-hover:opacity-15 blur-3xl transition-all duration-700 rounded-[3rem]`}></div>
 
             <div className="relative h-full flex flex-col overflow-hidden rounded-[2.5rem] bg-slate-900/40 backdrop-blur-xl border border-white/5 group-hover:border-blue-500/50 transition-all duration-500 hover:shadow-2xl hover:shadow-blue-500/10">
-                <div className="relative aspect-[4/5] overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000 shrink-0">
+                <div className={`relative aspect-[4/5] overflow-hidden transition-all duration-1000 shrink-0 ${isGray ? 'grayscale' : 'grayscale-0'}`}>
                     <img
                         src={speaker.image || 'https://images.unsplash.com/photo-1559839734-2b71f1536783?auto=format&fit=crop&q=80&w=400&h=500'}
                         alt={speaker.name}
                         className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-60 group-hover:opacity-10 transition-opacity duration-700"></div>
+                    <div className={`absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent transition-opacity duration-700 ${isGray ? 'opacity-20' : 'opacity-60 group-hover:opacity-10'}`}></div>
                 </div>
 
 
@@ -54,9 +56,9 @@ const SpeakersPage = () => {
             color: "from-blue-600 to-indigo-400",
         },
         {
-            name: "Dr. Malek Ghorbel",
-            image: "/intervenants/dr_malek.png",
-            color: "from-purple-600 to-pink-500",
+            name: "Dr. Arcelin Ben Mahmoud",
+            image: "/intervenants/Arcelin.png",
+            color: "from-pink-500 to-rose-400",
         },
         {
             name: "Dr. Ahmed Amine Chaabane ",
@@ -74,10 +76,11 @@ const SpeakersPage = () => {
             color: "from-emerald-500 to-teal-400",
         },
         {
-            name: "Dr. Anice Necibi",
-            image: "/intervenants/Dr_anice.png",
-            color: "from-orange-500 to-yellow-400",
+            name: "Dr. Malek Ghorbel",
+            image: "/intervenants/dr_malek.png",
+            color: "from-purple-600 to-pink-500",
         },
+
         {
             name: "Dr. Omar Marouane ",
             image: "/intervenants/dr_omar.png",
@@ -87,7 +90,13 @@ const SpeakersPage = () => {
             name: "Dr. Safa Ben Tanfous ",
             image: "/intervenants/dr_safa.png",
             color: "from-blue-600 to-red-300",
-        }
+        },
+        {
+            name: "Dr. Anice Necibi",
+            image: "/intervenants/Dr_anice.png",
+            color: "from-orange-500 to-yellow-400",
+        },
+
     ];
 
     return (

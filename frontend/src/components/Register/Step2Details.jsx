@@ -3,18 +3,22 @@ import { User, Check, Utensils, Briefcase, Calendar } from 'lucide-react';
 import FormInput from '../Form/FormInput';
 import FormSelect from '../Form/FormSelect';
 
-const Step2Details = ({ formData, handleChange, setFormData, isMaghreb }) => {
+const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPrice, currency }) => {
     const isPraticienOrAssistante = formData.role === 'praticien' || formData.role === 'assistante';
 
     if (!isMaghreb) {
         return (
-            <div className="text-center py-10 animate-fadeIn">
-                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Check className="w-10 h-10 text-green-400" />
+            <div className="py-12 text-center animate-fadeIn">
+                <div className="relative mb-10 inline-block">
+                    <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full scale-150 animate-pulse"></div>
+                    <div className="relative w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto border border-green-500/30">
+                        <Check className="w-10 h-10 text-green-400" />
+                    </div>
                 </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Profil Europe Validé</h3>
-                <p className="text-slate-400">Options 2 jours + Repas inclus appliquées automatiquement.</p>
-                <p className="text-slate-500 text-sm mt-4">Passer directement à l'étape de paiement.</p>
+                <p className="text-slate-400 mb-4">Options 2 jours + Repas inclus appliquées automatiquement.</p>
+                
+                <p className="text-slate-500 text-sm mt-10">Cliquez sur suivant pour l'étape de paiement.</p>
             </div>
         );
     }
@@ -237,6 +241,26 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb }) => {
                     />
                 </div>
             )}
+            
+            {/* Résumé Dynamique du Prix */}
+            <div className="mt-10 pt-6 border-t border-slate-700/50">
+                <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h4 className="text-blue-100 font-bold text-lg">Total de votre inscription</h4>
+                        <p className="text-slate-400 text-sm">Le tarif se met à jour selon vos choix</p>
+                    </div>
+                    <div className="text-right">
+                        <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+                            {totalPrice} {currency}
+                        </div>
+                        {isMaghreb && (
+                            <div className="text-[10px] text-orange-400/80 font-bold uppercase tracking-wider mt-1">
+                                Repas : 80 TND / ticket
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

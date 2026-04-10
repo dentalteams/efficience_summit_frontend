@@ -76,7 +76,7 @@ const RegisterPage = () => {
 
 
             if (formData.role === 'etudiant') {
-                price = 100; // Étudiants: 100 TND les 2 jours
+                price = formData.dureeParticipation === '2_jours' ? 100 : 50;
             } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
                 price = 500; // Tarif partenaire associations
             } else if (formData.role === 'praticien') {
@@ -95,7 +95,7 @@ const RegisterPage = () => {
                     const pRole = addParticipants[i]?.role || 'assistante';
                     const pDuree = addParticipants[i]?.dureeParticipation || '2_jours';
 
-                    if (pRole === 'etudiant') price += 100;
+                    if (pRole === 'etudiant') price += pDuree === '2_jours' ? 100 : 50;
                     else if (pRole === 'praticien') price += pDuree === '2_jours' ? 700 : 500;
                     else price += pDuree === '2_jours' ? 300 : 200;
                 }
@@ -109,9 +109,18 @@ const RegisterPage = () => {
             }
 
             // Apply Code Promo (20% discount)
-            if (formData.codePromo && ['SUMMIT20', 'DOCIC']) {
+            if (formData.codePromo && ['SUMMIT20', 'DOCIC'].includes(formData.codePromo)) {
                 price = Math.round(price * 0.8);
             }
+
+            // --- REPAS (Non remisable) ---
+            let totalTickets = parseInt(formData.ticketsRepas) || 0;
+            if (formData.additionalParticipants) {
+                formData.additionalParticipants.forEach(p => {
+                    totalTickets += (parseInt(p.ticketsRepas) || 0);
+                });
+            }
+            price += (totalTickets * 80);
 
         } else {
             curr = '€';
@@ -271,7 +280,7 @@ const RegisterPage = () => {
                             <>
                                 <form onSubmit={(e) => e.preventDefault()}>
                                     {step === 1 && <Step1General formData={formData} handleChange={handleChange} setFormData={setFormData} errors={errors} setErrors={setErrors} />}
-                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} />}
+                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} totalPrice={totalPrice} currency={currency} />}
                                     {step === 3 && (
                                         <Step3Payment
                                             formData={formData}
