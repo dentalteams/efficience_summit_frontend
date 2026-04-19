@@ -126,26 +126,22 @@ const Step1General = ({ formData, handleChange, setFormData, errors, setErrors }
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <RoleCard
-                        role="praticien" title="Praticien" icon={Stethoscope}
-                        description="Dentiste, médecin ou chirurgien."
+                        role="praticien" title="Chirurgien-dentiste" icon={Stethoscope}
                         selected={formData.role === 'praticien'}
                         onClick={() => setFormData({ ...formData, role: 'praticien' })}
                     />
                     <RoleCard
                         role="assistante" title="Assistante" icon={User}
-                        description="Assistant(e) dentaire ou médical(e)."
                         selected={formData.role === 'assistante'}
                         onClick={() => setFormData({ ...formData, role: 'assistante' })}
                     />
                     <RoleCard
                         role="exposant" title="Exposant" icon={Store}
-                        description="Présentez vos produits et services."
                         selected={formData.role === 'exposant'}
                         onClick={() => setFormData({ ...formData, role: 'exposant' })}
                     />
                     <RoleCard
-                        role="etudiant" title="Étudiant" icon={GraduationCap}
-                        description="Étudiant en cours de formation."
+                        role="etudiant" title="Étudiant ou interne" icon={GraduationCap}
                         selected={formData.role === 'etudiant'}
                         onClick={() => setFormData({ ...formData, role: 'etudiant' })}
                     />

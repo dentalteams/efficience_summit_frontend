@@ -72,60 +72,133 @@ const RegisterPage = () => {
         const isMaghreb = ['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays);
 
         if (isMaghreb) {
-            curr = 'TND';
+            if (formData.pays === 'Algérie') {
+                curr = '€';
+                
+                if (formData.role === 'etudiant') {
+                    price = formData.dureeParticipation === '2_jours' ? 30 : 15;
+                } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
+                    // For Algeria with association? The user didn't specify. We fallback to normal praticien price if needed, or 200.
+                    price = formData.dureeParticipation === '2_jours' ? 200 : 150; 
+                } else if (formData.role === 'praticien') {
+                    price = formData.dureeParticipation === '2_jours' ? 200 : 150;
+                } else if (formData.role === 'assistante') {
+                    price = formData.dureeParticipation === '2_jours' ? 90 : 60;
+                } else if (formData.role === 'exposant') {
+                    price = formData.dureeParticipation === '2_jours' ? 430 : 150;
+                }
 
+                // Additional participants
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    const addParticipants = formData.additionalParticipants || [];
+                    const maxAdditional = parseInt(formData.nbParticipants) - 1;
+                    for (let i = 0; i < maxAdditional; i++) {
+                        const pRole = addParticipants[i]?.role || 'assistante';
+                        const pDuree = addParticipants[i]?.dureeParticipation || '2_jours';
 
-            if (formData.role === 'etudiant') {
-                price = formData.dureeParticipation === '2_jours' ? 100 : 50;
-            } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
-                price = 500; // Tarif partenaire associations
-            } else if (formData.role === 'praticien') {
-                price = formData.dureeParticipation === '2_jours' ? 700 : 500;
-            } else if (formData.role === 'assistante') {
-                price = formData.dureeParticipation === '2_jours' ? 300 : 200;
-            } else if (formData.role === 'exposant') {
-                price = formData.typeStand === '8m' ? 2500 : 1500;
+                        if (pRole === 'etudiant') price += pDuree === '2_jours' ? 30 : 15;
+                        else if (pRole === 'praticien') price += pDuree === '2_jours' ? 200 : 150;
+                        else price += pDuree === '2_jours' ? 90 : 60;
+                    }
+                }
+
+                // Apply Early Bird Discount (20% before April 4, 2026) -> we can keep it
+                const today = new Date();
+                const deadline = new Date('2026-04-04');
+                if (today < deadline && !['etudiant', 'exposant'].includes(formData.role) && !formData.association) {
+                    price = Math.round(price * 0.8);
+                }
+
+                // Apply Code Promo (20% discount)
+                if (formData.codePromo && ['SUMMIT20', 'DOCIC'].includes(formData.codePromo)) {
+                    price = Math.round(price * 0.8);
+                }
+
+                // --- REPAS (Non remisable) ---
+                let totalTickets = parseInt(formData.ticketsRepas) || 0;
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    const maxAdditional = parseInt(formData.nbParticipants) - 1;
+                    if (formData.additionalParticipants) {
+                        for (let i = 0; i < maxAdditional; i++) {
+                            const p = formData.additionalParticipants[i];
+                            if (p) {
+                                totalTickets += (parseInt(p.ticketsRepas) || 0);
+                            }
+                        }
+                    }
+                }
+                price += (totalTickets * 27); // 27€ for Algeria
+
+            } else {
+                // Tunisie / Maroc
+                curr = 'TND';
+
+                if (formData.role === 'etudiant') {
+                    price = formData.dureeParticipation === '2_jours' ? 100 : 50;
+                } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
+                    price = 500; // Tarif partenaire associations
+                } else if (formData.role === 'praticien') {
+                    price = formData.dureeParticipation === '2_jours' ? 700 : 500;
+                } else if (formData.role === 'assistante') {
+                    price = formData.dureeParticipation === '2_jours' ? 300 : 200;
+                } else if (formData.role === 'exposant') {
+                    price = formData.typeStand === '8m' ? 2500 : 1500;
+                }
+
+                // Additional participants
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    const addParticipants = formData.additionalParticipants || [];
+                    const maxAdditional = parseInt(formData.nbParticipants) - 1;
+                    for (let i = 0; i < maxAdditional; i++) {
+                        const pRole = addParticipants[i]?.role || 'assistante';
+                        const pDuree = addParticipants[i]?.dureeParticipation || '2_jours';
+
+                        if (pRole === 'etudiant') price += pDuree === '2_jours' ? 100 : 50;
+                        else if (pRole === 'praticien') price += pDuree === '2_jours' ? 700 : 500;
+                        else price += pDuree === '2_jours' ? 300 : 200;
+                    }
+                }
+
+                // Apply Early Bird
+                const today = new Date();
+                const deadline = new Date('2026-04-04');
+                if (today < deadline && !['etudiant', 'exposant'].includes(formData.role) && !formData.association) {
+                    price = Math.round(price * 0.8);
+                }
+
+                if (formData.codePromo && ['SUMMIT20', 'DOCIC'].includes(formData.codePromo)) {
+                    price = Math.round(price * 0.8);
+                }
+
+                let totalTickets = parseInt(formData.ticketsRepas) || 0;
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    const maxAdditional = parseInt(formData.nbParticipants) - 1;
+                    if (formData.additionalParticipants) {
+                        for (let i = 0; i < maxAdditional; i++) {
+                            const p = formData.additionalParticipants[i];
+                            if (p) {
+                                totalTickets += (parseInt(p.ticketsRepas) || 0);
+                            }
+                        }
+                    }
+                }
+                price += (totalTickets * 90);
             }
+        } else {
+            // Europe and others
+            curr = '€';
+            // Premier participant
+            price = (formData.role === 'assistante' ? 300 : 500);
 
-            // Additional participants
-            if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+            // Participants supplémentaires
+            if (formData.nbParticipants > 1) {
                 const addParticipants = formData.additionalParticipants || [];
                 const maxAdditional = parseInt(formData.nbParticipants) - 1;
                 for (let i = 0; i < maxAdditional; i++) {
                     const pRole = addParticipants[i]?.role || 'assistante';
-                    const pDuree = addParticipants[i]?.dureeParticipation || '2_jours';
-
-                    if (pRole === 'etudiant') price += pDuree === '2_jours' ? 100 : 50;
-                    else if (pRole === 'praticien') price += pDuree === '2_jours' ? 700 : 500;
-                    else price += pDuree === '2_jours' ? 300 : 200;
+                    price += (pRole === 'assistante' ? 300 : 500);
                 }
             }
-
-            // Apply Early Bird Discount (20% before April 4, 2026)
-            const today = new Date();
-            const deadline = new Date('2026-04-04');
-            if (today < deadline && !['etudiant', 'exposant'].includes(formData.role) && !formData.association) {
-                price = Math.round(price * 0.8);
-            }
-
-            // Apply Code Promo (20% discount)
-            if (formData.codePromo && ['SUMMIT20', 'DOCIC'].includes(formData.codePromo)) {
-                price = Math.round(price * 0.8);
-            }
-
-            // --- REPAS (Non remisable) ---
-            let totalTickets = parseInt(formData.ticketsRepas) || 0;
-            if (formData.additionalParticipants) {
-                formData.additionalParticipants.forEach(p => {
-                    totalTickets += (parseInt(p.ticketsRepas) || 0);
-                });
-            }
-            price += (totalTickets * 80);
-
-        } else {
-            curr = '€';
-            price = 500;
-            if (formData.nbParticipants > 1) price *= parseInt(formData.nbParticipants);
         }
         setCurrency(curr);
         setTotalPrice(price);
@@ -181,9 +254,34 @@ const RegisterPage = () => {
         return Object.keys(tempErrors).length === 0;
     };
 
+    const validateStep2 = () => {
+        let tempErrors = { ...errors };
+        let isValid = true;
+        
+        if (formData.nbParticipants > 1) {
+            const addParticipants = formData.additionalParticipants || [];
+            const maxAdditional = parseInt(formData.nbParticipants) - 1;
+            for (let i = 0; i < maxAdditional; i++) {
+                if (!addParticipants[i]?.nom) {
+                    tempErrors[`participant_${i}_nom`] = "Le nom est obligatoire";
+                    isValid = false;
+                }
+                if (!addParticipants[i]?.prenom) {
+                    tempErrors[`participant_${i}_prenom`] = "Le prénom est obligatoire";
+                    isValid = false;
+                }
+            }
+        }
+        setErrors(tempErrors);
+        return isValid;
+    };
+
     const handleNext = () => {
         if (step === 1 && !validateStep1()) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        if (step === 2 && !validateStep2()) {
             return;
         }
         setStep(prev => prev + 1);
@@ -280,7 +378,7 @@ const RegisterPage = () => {
                             <>
                                 <form onSubmit={(e) => e.preventDefault()}>
                                     {step === 1 && <Step1General formData={formData} handleChange={handleChange} setFormData={setFormData} errors={errors} setErrors={setErrors} />}
-                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} totalPrice={totalPrice} currency={currency} />}
+                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} totalPrice={totalPrice} currency={currency} errors={errors} />}
                                     {step === 3 && (
                                         <Step3Payment
                                             formData={formData}

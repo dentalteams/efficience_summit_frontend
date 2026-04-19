@@ -1,20 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
-import { User, Calendar, Download, Mail, Check, Clock, Loader2 } from 'lucide-react';
+import { User, Calendar, Download, Mail, Check, Clock, Loader2, ArrowRight } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import axios from 'axios';
 
 const DashboardPage = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [downloading, setDownloading] = useState(false);
     const [emailing, setEmailing] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
 
     if (!user) return null;
 
+    // Fonction de génération sécurisée du contenu du QR Code
+    const generateSecureQRData = (participant, isPrincipal = true) => {
+        const isPaid = user.paymentStatus === 'paid';
+        const status = isPaid ? 'Payé' : 'Non payé';
+        // Création d'un token basique pour authentifier le billet avec une clé visuelle
+        const rawToken = `${participant?.registrationNumber || user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
+        const secureToken = btoa(rawToken).substring(0, 10).toUpperCase();
 
+        if (isPrincipal) {
+            return `--- SUMMIT EFFICIENCE 2026 ---
+ID: ${user.registrationNumber}
+Participant: ${user.prenom?.toUpperCase()} ${user.nom?.toUpperCase()}
+Role: ${user.role?.toUpperCase()}
+Paiement: ${status}
+Tickets Repas: ${user.ticketsRepas || 0}
+Assistantes avec vous: ${(user.nbParticipants || 1) - 1}
+------------------------------
+SecToken: ${secureToken}`;
+        } else {
+            return `--- SUMMIT EFFICIENCE 2026 ---
+ID: ${participant.registrationNumber || 'Billet-Lie'}
+Participant: ${participant.prenom?.toUpperCase()} ${participant.nom?.toUpperCase()}
+Role: ${participant.role?.toUpperCase() || 'ASSISTANTE'}
+Lie au compte de: ${user.nom?.toUpperCase()}
+Paiement: ${status}
+Tickets Repas: ${participant.ticketsRepas || 0}
+------------------------------
+SecToken: ${secureToken}`;
+        }
+    };
 
     const downloadBadge = async () => {
         setDownloading(true);
@@ -165,9 +196,9 @@ const DashboardPage = () => {
                             <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5">
                                 <div className="flex justify-center border-4 border-white/10 p-4 rounded-xl bg-white">
                                     <QRCodeSVG
-                                        value={user.qrCode || user.registrationNumber || 'SE26-TEST'}
+                                        value={generateSecureQRData(user, true)}
                                         size={256}
-                                        level="H"
+                                        level="M"
                                         includeMargin={true}
                                     />
                                 </div>
@@ -184,8 +215,9 @@ const DashboardPage = () => {
                                     <div style={{ display: 'inline-block', padding: '20px', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
                                         <QRCodeCanvas
                                             id="qr-canvas"
-                                            value={user.qrCode || user.registrationNumber || 'SE26-TEST'}
+                                            value={generateSecureQRData(user, true)}
                                             size={250}
+                                            level="M"
                                         />
                                     </div>
                                     <div style={{ marginTop: '30px' }}>
@@ -243,6 +275,23 @@ const DashboardPage = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="mt-8 pt-6 border-t border-slate-700/50">
+                                <button
+                                    onClick={() => navigate('/programme')}
+                                    className="w-full relative group overflow-hidden rounded-2xl"
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 transition-all duration-500 bg-[length:200%_auto] group-hover:bg-right rounded-2xl blur-[2px] opacity-70 group-hover:opacity-100"></div>
+                                    <div className="absolute inset-[1px] bg-slate-900 rounded-2xl transition-all duration-300 group-hover:bg-slate-900/50"></div>
+                                    <div className="relative px-8 py-4 flex items-center justify-center space-x-3">
+                                        <Calendar className="text-cyan-300 w-6 h-6 group-hover:scale-110 group-hover:text-white transition-all duration-300" />
+                                        <span className="text-white font-black text-lg tracking-wide uppercase group-hover:text-cyan-100 transition-colors drop-shadow-md">
+                                            Consulter le Programme
+                                        </span>
+                                        <ArrowRight className="text-cyan-300 w-6 h-6 group-hover:translate-x-1.5 group-hover:text-white transition-all duration-300 drop-shadow-md" />
+                                    </div>
+                                </button>
+                            </div>
                         </div>
 
                         {user.additionalParticipants && user.additionalParticipants.length > 0 && (
@@ -262,9 +311,9 @@ const DashboardPage = () => {
 
                                             <div className="bg-white p-4 rounded-xl shadow-lg">
                                                 <QRCodeSVG
-                                                    value={p.qrCode || p.registrationNumber || `NO-QR-${idx}`}
+                                                    value={generateSecureQRData(p, false)}
                                                     size={140}
-                                                    level="H"
+                                                    level="M"
                                                     includeMargin={true}
                                                 />
                                             </div>

@@ -3,10 +3,12 @@ import {
     Calendar, Clock, Star, Users, Coffee, Utensils,
     Monitor, GlassWater, Heart, Eye, TrendingUp,
     Award, Trophy, Zap, ShieldCheck, MapPin,
-    ChevronRight, ArrowRight
+    ChevronRight, ArrowRight, ArrowLeft
 } from 'lucide-react';
 import { LuCalendarClock } from "react-icons/lu";
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 
 
@@ -90,6 +92,8 @@ const ProgramCard = ({ item, index }) => {
 const ProgramPage = () => {
     const [activeDay, setActiveDay] = useState(1);
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     const programData = {
         day1: {
@@ -127,6 +131,20 @@ const ProgramPage = () => {
 
     return (
         <div className="min-h-screen bg-black pb-20 px-4 relative overflow-hidden">
+            
+            {isAuthenticated && (
+                <div className="fixed top-24 left-4 md:left-8 z-50 animate-fade-in-up">
+                    <button
+                        onClick={() => navigate('/dashboard')}
+                        className="group flex items-center space-x-3 bg-slate-900/60 hover:bg-slate-900/90 backdrop-blur-xl border border-blue-500/20 hover:border-blue-500/50 pr-5 pl-2 py-2 rounded-full transition-all duration-300 shadow-xl shadow-blue-500/5 hover:shadow-blue-500/20"
+                    >
+                        <div className="bg-gradient-to-br from-blue-500 to-cyan-400 p-2 rounded-full shadow-md group-hover:-translate-x-1 transition-transform duration-300">
+                            <ArrowLeft className="w-4 h-4 text-white" strokeWidth={3} />
+                        </div>
+                        <span className="text-white font-bold text-sm tracking-widest uppercase">Mon Espace</span>
+                    </button>
+                </div>
+            )}
 
             <div className="absolute top-0 left-0 w-full h-[450px] md:h-[750px] overflow-hidden">
                 <iframe

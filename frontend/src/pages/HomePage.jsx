@@ -243,11 +243,11 @@ const HomePage = () => {
 
                     <div className="grid md:grid-cols-3 gap-6 mb-12">
                         {[
-                            { title: 'salle à manger', image: '/salle_manger.png' },
-                            { title: 'piscine', image: '/piscine_2.png' },
-                            { title: 'enfants', image: '/enfants.png' },
-                            { title: 'buffet', image: '/buffet.png' },
-                            { title: 'hotel', image: '/piscine.png' },
+                            { title: 'salle à manger', image: '/salle_manger.webp' },
+                            { title: 'piscine', image: '/piscine_2.webp' },
+                            { title: 'enfants', image: '/enfants.webp' },
+                            { title: 'buffet', image: '/buffet.webp' },
+                            { title: 'hotel', image: '/piscine.webp' },
                             { title: 'chambre', image: '/chambre.png' },
 
                         ].map((item, index) => (

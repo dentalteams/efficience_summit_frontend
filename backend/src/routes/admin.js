@@ -115,12 +115,12 @@ router.put('/users/:id', async (req, res) => {
     try {
         // Prevent sensitive fields from being updated directly via this route
         const allowedUpdates = [
-            'nom', 'prenom', 'email', 'telephone', 'ville', 'pays', 
-            'role', 'paymentStatus', 'modePaiement', 'totalPrice', 
+            'nom', 'prenom', 'email', 'telephone', 'ville', 'pays',
+            'role', 'paymentStatus', 'modePaiement', 'totalPrice',
             'nbParticipants', 'additionalParticipants', 'dureeParticipation',
             'ticketsRepas', 'typeStand', 'produitsExposes'
         ];
-        
+
         const updates = Object.keys(req.body);
         const isValidOperation = updates.every(update => allowedUpdates.includes(update));
 
@@ -129,11 +129,11 @@ router.put('/users/:id', async (req, res) => {
         }
 
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        
+
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
-        
+
         res.json(user);
     } catch (err) {
         console.error(err);
@@ -146,11 +146,11 @@ router.put('/users/:id', async (req, res) => {
 router.delete('/users/:id', async (req, res) => {
     try {
         const user = await User.findByIdAndDelete(req.params.id);
-        
+
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
         }
-        
+
         res.json({ message: 'Utilisateur supprimé avec succès' });
     } catch (err) {
         console.error(err);

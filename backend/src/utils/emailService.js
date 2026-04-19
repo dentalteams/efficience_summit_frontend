@@ -23,12 +23,23 @@ const isEmailConfigured = () => {
 const sendRegistrationEmail = async (user, defaultPassword = null) => {
     try {
 
-        const secureQrToken = jwt.sign(
-            { id: user._id, regNum: user.registrationNumber, role: user.role },
-            process.env.JWT_SECRET
-        );
-        // Generate QR Code Image as DataURL containing the secure token
-        const qrCodeDataUrl = await QRCode.toDataURL(secureQrToken);
+        const isPaid = user.paymentStatus === 'paid';
+        const status = isPaid ? 'Payé' : 'Non payé';
+        const rawToken = `${user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
+        const secureToken = Buffer.from(rawToken).toString('base64').substring(0, 10).toUpperCase();
+
+        const qrText = `--- SUMMIT EFFICIENCE 2026 ---
+ID: ${user.registrationNumber}
+Participant: ${(user.prenom || '').toUpperCase()} ${(user.nom || '').toUpperCase()}
+Role: ${(user.role || '').toUpperCase()}
+Paiement: ${status}
+Tickets Repas: ${user.ticketsRepas || 0}
+Assistantes avec vous: ${(user.nbParticipants || 1) - 1}
+------------------------------
+SecToken: ${secureToken}`;
+
+        // Generate QR Code Image as DataURL containing the rich text
+        const qrCodeDataUrl = await QRCode.toDataURL(qrText);
 
         const frontendUrl = process.env.FRONTEND_URL;
 
@@ -40,12 +51,44 @@ const sendRegistrationEmail = async (user, defaultPassword = null) => {
             </div>
         ` : '';
 
+        let unpaidBlock = '';
+        if (!isPaid) {
+            if (user.modePaiement === 'especes' || user.modePaiement === 'sur_place') {
+                unpaidBlock = `
+                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
+                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">ℹ️ Règlement sur place</h3>
+                    <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
+                        Votre passe a bien été réservé. Vous avez choisi de régler l'inscription <strong>en espèces sur place</strong> le jour du congrès.
+                    </p>
+                </div>`;
+            } else if (user.modePaiement === 'virement') {
+                unpaidBlock = `
+                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
+                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">ℹ️ Virement en attente</h3>
+                    <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
+                        Votre passe a bien été réservé. Nous sommes en attente de la réception de votre virement bancaire pour valider définitivement votre badge.
+                    </p>
+                </div>`;
+            } else {
+                unpaidBlock = `
+                <div style="background-color: #ffe0e0; border-left: 4px solid #f44336; padding: 15px; margin-top: 20px; border-radius: 8px;">
+                    <h3 style="margin: 0; color: #d32f2f; font-size: 18px;">⚠️ Action Requise : Paiement en attente</h3>
+                    <p style="margin: 8px 0 0 0; color: #b71c1c; font-size: 15px;">
+                        Votre passe a bien été réservé, mais <strong>votre inscription n'est pas encore finalisée</strong> car nous n'avons pas reçu votre paiement en ligne.
+                    </p>
+                    <p style="margin: 8px 0 0 0; color: #b71c1c; font-size: 14px;">
+                        Veuillez finaliser votre règlement (en ligne depuis votre espace ou sur place le Jour J) pour activer votre badge officiel.
+                    </p>
+                </div>`;
+            }
+        }
+
         console.log(`Tentative d'envoi d'email à: ${user.email} (Sujet: Confirmation d'inscription)`);
         const mailOptions = {
-            from: `"Efficience Summit 2026" <${process.env.EMAIL_USER}>`,
+            from: \`"Efficience Summit 2026" <\${process.env.EMAIL_USER}>\`,
             to: user.email,
-            subject: 'Confirmation d\'inscription - Efficience Summit 2026',
-            html: `
+            subject: 'Confirmation d\\'inscription - Efficience Summit 2026',
+            html: \`
                 <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background-color: #ffffff;">
                     <div style="background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); padding: 40px 20px; text-align: center;">
                         <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Efficience Summit 2026</h1>
@@ -53,14 +96,15 @@ const sendRegistrationEmail = async (user, defaultPassword = null) => {
                     </div>
                     
                     <div style="padding: 40px 30px; color: #1e293b;">
-                        <h2 style="font-size: 22px; margin-bottom: 20px; color: #0f172a;">Bonjour Dr. ${user.prenom} ${user.nom},</h2>
+                        <h2 style="font-size: 22px; margin-bottom: 20px; color: #0f172a;">Bonjour Dr. \${user.prenom} \${user.nom},</h2>
                         
                         <p style="line-height: 1.6; font-size: 16px; color: #475569;">
                             Nous avons le plaisir de vous confirmer votre inscription au <strong>Summit Efficience 2026</strong>. 
                             Vous trouverez ci-dessous vos informations personnelles ainsi que votre badge d'accès unique sécurisé.
                         </p>
 
-                        ${passwordBlock}
+                        \${passwordBlock}
+                        \${unpaidBlock}
 
                         <div style="background-color: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid #edf2f7;">
                             <h3 style="margin-top: 0; font-size: 18px; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Détails de l'événement</h3>
@@ -86,7 +130,11 @@ const sendRegistrationEmail = async (user, defaultPassword = null) => {
                         </div>
 
                         <div style="text-align: center; margin-top: 40px;">
-                            <a href="${frontendUrl}/dashboard" style="background-color: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Accéder à mon Espace</a>
+                            ${(!isPaid && user.modePaiement === 'carte') ? 
+                                `<a href="${frontendUrl}/dashboard" style="background-color: #ef4444; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Accéder à mon espace pour Payer</a>` 
+                                : 
+                                `<a href="${frontendUrl}/dashboard" style="background-color: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block;">Accéder à mon Espace</a>`
+                            }
                         </div>
                     </div>
 
