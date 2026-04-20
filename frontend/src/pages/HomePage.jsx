@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { href, useNavigate } from 'react-router-dom';
-import { Calendar, Building, User, Check, Mail, Phone, MapPin, Instagram, Facebook, Linkedin, ArrowRight, Heart, ExternalLink } from 'lucide-react';
+import { Calendar, Building, User, Clock, Check, Mail, Phone, MapPin, Instagram, Facebook, Linkedin, ArrowRight, Heart, ExternalLink } from 'lucide-react';
 import { PiCalendarBold } from "react-icons/pi";
 import { LuCalendarClock } from "react-icons/lu";
 import { useTranslation } from 'react-i18next';
@@ -11,40 +11,57 @@ import Footer from '../components/Footer';
 const VideoCard = ({ video }) => {
     const [isPlaying, setIsPlaying] = useState(false);
 
+    // Extract YouTube ID to get the automatic thumbnail
+    const videoId = video.src.split('embed/')[1]?.split('?')[0];
+    const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+
     return (
         <div className="group cursor-pointer">
-            <div className="relative aspect-video bg-slate-900 rounded-3xl overflow-hidden border border-blue-400/20 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+            <div className="relative aspect-video bg-slate-950 rounded-3xl overflow-hidden border border-blue-400/20 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
+
+                {/* Background Thumbnail - shown while loading and before playing */}
+                <div className="absolute inset-0">
+                    <img
+                        src={thumbUrl}
+                        alt={video.title}
+                        className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-opacity duration-700"
+                    />
+                </div>
 
                 {isPlaying ? (
                     <iframe
                         width="100%"
                         height="100%"
-                        src={`${video.src}?autoplay=1`}
+                        src={`${video.src}&autoplay=1`}
                         title={video.title}
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowFullScreen
-                        className="absolute inset-0 w-full h-full"
+                        className="absolute inset-0 w-full h-full z-20 animate-fade-in"
                     />
                 ) : (
                     <div className="absolute inset-0 z-10" onClick={() => setIsPlaying(true)}>
-                        <div className={`absolute inset-0 bg-gradient-to-br ${video.gradient} backdrop-blur-sm opacity-80 transition-opacity group-hover:opacity-90`}></div>
+                        <div className={`absolute inset-0 bg-gradient-to-br ${video.gradient} backdrop-blur-[2px] opacity-60 transition-opacity group-hover:opacity-40`}></div>
 
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="relative">
-                                <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl scale-150 group-hover:scale-175 transition-transform duration-500"></div>
-                                <div className="relative w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform duration-300">
-                                    <div className="w-0 h-0 border-t-[16px] border-t-transparent border-l-[28px] border-l-blue-600 border-b-[16px] border-b-transparent ml-2"></div>
+                                <div className="absolute inset-0 bg-blue-500/30 rounded-full blur-2xl scale-150 group-hover:scale-175 transition-transform duration-500"></div>
+                                <div className="relative w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-white/20 transition-all duration-300">
+                                    <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[22px] border-l-white border-b-[12px] border-b-transparent ml-1.5"></div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
-                            <p className="text-white font-bold text-xl mb-1">{video.title}</p>
-                            <p className="text-blue-300 text-sm">{video.duration}</p>
+                        <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                            <p className="text-white font-black text-2xl mb-1 tracking-tight">{video.title}</p>
+                            <div className="flex items-center space-x-3">
+                                <p className="text-blue-300/80 text-sm font-medium flex items-center">
+                                    <Clock className="w-3.5 h-3.5 mr-1" /> {video.duration}
+                                </p>
+                            </div>
                         </div>
-                        <div className="absolute top-4 right-4 px-4 py-2 bg-black/50 backdrop-blur-xl rounded-full border border-white/20">
-                            <p className="text-white text-xs font-bold">HD</p>
+                        <div className="absolute top-6 right-6 px-4 py-1.5 bg-blue-600/20 backdrop-blur-xl rounded-full border border-blue-400/30">
+                            <p className="text-blue-200 text-[10px] font-black tracking-widest uppercase">HD</p>
                         </div>
                     </div>
                 )}
