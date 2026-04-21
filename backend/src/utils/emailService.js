@@ -184,29 +184,18 @@ SecToken: ${secureToken}`;
                                         </div>
 
                                         <div style="text-align: center; margin-top: 40px;">
-                                            ${(!isPaid && user.modePaiement === 'carte') ? `
-                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre paiement est en attente. Cliquez ci-dessous pour finaliser votre règlement en ligne.</p>
+                                            ${!isPaid ? `
+                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder à votre espace et finaliser votre paiement.</p>
                                                 <a href="${frontendUrl}/dashboard#payment" 
                                                    style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
                                                     💳 Finaliser mon Paiement
                                                 </a>
-                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement 100% sécurisé via Stripe</p>
-                                            ` : (!isPaid && user.modePaiement === 'virement') ? `
-                                                <p style="color: #0369a1; font-size: 14px; margin-bottom: 12px;">ℹ️ Votre virement est en cours de traitement. Votre badge sera activé dès réception.</p>
-                                                <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
-                                                    🏛️ Accéder à mon Espace
-                                                </a>
-                                            ` : (!isPaid && (user.modePaiement === 'especes' || user.modePaiement === 'sur_place')) ? `
-                                                <p style="color: #0369a1; font-size: 14px; margin-bottom: 12px;">✅ Votre place est réservée. Réglez en espèces le jour du congrès.</p>
-                                                <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
-                                                    📋 Consulter mon Espace
-                                                </a>
+                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement sécurisé par carte ou consultation de votre dossier</p>
                                             ` : `
+                                                <p style="color: #059669; font-size: 14px; margin-bottom: 12px;">✅ Votre inscription est confirmée. Retrouvez votre badge et vos accès ci-dessous.</p>
                                                 <a href="${frontendUrl}/dashboard" 
                                                    style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
-                                                    🎫 Accéder à mon Espace
+                                                    🎫 Accéder à mon Badge
                                                 </a>
                                             `}
                                         </div>
