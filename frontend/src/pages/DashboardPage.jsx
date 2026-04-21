@@ -8,12 +8,44 @@ import jsPDF from 'jspdf';
 import axios from 'axios';
 
 const DashboardPage = () => {
-    const { user } = useAuth();
+    const { user: authUser } = useAuth();
     const navigate = useNavigate();
     const [downloading, setDownloading] = useState(false);
     const [emailing, setEmailing] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
+    // Fresh user data fetched directly from DB — always up to date with admin changes
+    const [user, setUser] = useState(null);
+    const [loadingUser, setLoadingUser] = useState(true);
 
+    useEffect(() => {
+        const fetchFreshUser = async () => {
+            try {
+                const res = await axios.get('/api/auth/me');
+                setUser(res.data);
+            } catch (err) {
+                console.error('Impossible de rafraîchir les données utilisateur:', err);
+                // Fallback to auth context user
+                setUser(authUser);
+            } finally {
+                setLoadingUser(false);
+            }
+        };
+        if (authUser) {
+            fetchFreshUser();
+        } else {
+            setLoadingUser(false);
+        }
+    }, [authUser?._id]);
+
+    if (!authUser) return null;
+    if (loadingUser) return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <Loader2 className="w-10 h-10 text-blue-400 animate-spin" />
+                <p className="text-blue-200 text-sm">Chargement de vos informations...</p>
+            </div>
+        </div>
+    );
     if (!user) return null;
 
     // Fonction de génération sécurisée du contenu du QR Code
