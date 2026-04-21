@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { User, Calendar, Download, Mail, Check, Clock, Loader2, ArrowRight } from 'lucide-react';
 import html2canvas from 'html2canvas';
@@ -10,6 +10,8 @@ import axios from 'axios';
 const DashboardPage = () => {
     const { user: authUser } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const paymentRef = useRef(null);
     const [downloading, setDownloading] = useState(false);
     const [emailing, setEmailing] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
@@ -36,6 +38,15 @@ const DashboardPage = () => {
             setLoadingUser(false);
         }
     }, [authUser?._id]);
+
+    // Scroll vers la section de paiement si on arrive depuis l'email (#payment)
+    useEffect(() => {
+        if (!loadingUser && user && location.hash === '#payment' && paymentRef.current) {
+            setTimeout(() => {
+                paymentRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
+    }, [loadingUser, user, location.hash]);
 
     if (!authUser) return null;
     if (loadingUser) return (
@@ -285,7 +296,7 @@ SecToken: ${secureToken}`;
                         </div>
 
                         {/* 🆕 Détails de l'Inscription */}
-                        <div id="payment" className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
+                        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
                             <h3 className="text-2xl font-bold text-white mb-6">Détails de l'Inscription</h3>
                             
                             <div className="space-y-4 mb-6">
@@ -311,7 +322,7 @@ SecToken: ${secureToken}`;
                                 </div>
                                 
                                 {user.paymentStatus !== 'paid' && (
-                                    <div className={`p-4 border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                                    <div ref={paymentRef} id="payment" className={`p-4 border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20 ring-2 ring-red-500/0 transition-all' : 'bg-blue-500/10 border-blue-500/20'}`}>
                                         <div className={`text-sm flex-1 ${user.modePaiement === 'carte' ? 'text-red-200' : 'text-blue-200'}`}>
                                             {user.modePaiement === 'carte' 
                                                 ? "Votre paiement n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."

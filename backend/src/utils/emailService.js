@@ -28,15 +28,17 @@ const sendRegistrationEmail = async (user, defaultPassword = null) => {
         const rawToken = `${user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
         const secureToken = Buffer.from(rawToken).toString('base64').substring(0, 10).toUpperCase();
 
-        // Build additional participants section for QR
+        // Calcul du total des tickets (principal + accompagnants)
         const additionalParticipants = user.additionalParticipants || [];
         const totalTickets = (parseInt(user.ticketsRepas) || 0) + additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0);
-        let accompagnantLines = '';
+
+        // Liste des accompagnants pour le QR
+        let accompagnantQrLines = '';
         if (additionalParticipants.length > 0) {
-            accompagnantLines = '\nACCOMPAGNANTS:';
+            accompagnantQrLines = '\nACCOMPAGNANTS:';
             additionalParticipants.forEach((p, i) => {
                 const pRole = p.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (p.role || 'ASSISTANTE').toUpperCase();
-                accompagnantLines += `\n  ${i + 1}. ${(p.prenom || '').toUpperCase()} ${(p.nom || '').toUpperCase()} (${pRole}) - Repas: ${parseInt(p.ticketsRepas) || 0}`;
+                accompagnantQrLines += `\n  ${i + 1}. ${(p.prenom || '').toUpperCase()} ${(p.nom || '').toUpperCase()} (${pRole}) - Repas: ${parseInt(p.ticketsRepas) || 0}`;
             });
         }
 
@@ -47,7 +49,7 @@ Role: ${user.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (user.role || '').to
 Paiement: ${status}
 Tickets Repas (perso): ${parseInt(user.ticketsRepas) || 0}
 Total Tickets (groupe): ${totalTickets}
-Nb Accompagnants: ${additionalParticipants.length}${accompagnantLines}
+Nb Accompagnants: ${additionalParticipants.length}${accompagnantQrLines}
 ------------------------------
 SecToken: ${secureToken}`;
 
@@ -143,12 +145,16 @@ SecToken: ${secureToken}`;
                                                     <td style="padding: 8px 0; color: #1e293b;">${user.modePaiement} - ${isPaid ? 'Payé' : 'En attente'}</td>
                                                 </tr>
                                                 <tr>
-                                                    <td style="padding: 8px 0; color: #64748b;"><strong>Tickets Repas (total) :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b; font-weight: bold;">${totalTickets} ticket(s)</td>
-                                                </tr>
+                                                     <td style="padding: 8px 0; color: #64748b;"><strong>Tickets Repas (perso) :</strong></td>
+                                                     <td style="padding: 8px 0; color: #1e293b;">${parseInt(user.ticketsRepas) || 0}</td>
+                                                 </tr>
+                                                 <tr>
+                                                     <td style="padding: 8px 0; color: #64748b;"><strong>Total Tickets (groupe) :</strong></td>
+                                                     <td style="padding: 8px 0; color: #1e293b; font-weight: bold;">${totalTickets}</td>
+                                                 </tr>
                                                 <tr>
                                                     <td style="padding: 8px 0; color: #64748b;"><strong>Accompagnants :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b;">${additionalParticipants.length}</td>
+                                                    <td style="padding: 8px 0; color: #1e293b;">${(user.nbParticipants || 1) - 1}</td>
                                                 </tr>
                                             </table>
                                             ${additionalParticipantsHtml}
@@ -179,28 +185,28 @@ SecToken: ${secureToken}`;
 
                                         <div style="text-align: center; margin-top: 40px;">
                                             ${(!isPaid && user.modePaiement === 'carte') ? `
-                                                <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Votre inscription est réservée. Finalisez votre paiement en ligne pour activer votre badge.</p>
+                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre paiement est en attente. Cliquez ci-dessous pour finaliser votre règlement en ligne.</p>
                                                 <a href="${frontendUrl}/dashboard#payment" 
-                                                   style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
-                                                   💳 Payer en ligne maintenant
+                                                   style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
+                                                    💳 Finaliser mon Paiement
                                                 </a>
-                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement sécurisé via Stripe</p>
+                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement 100% sécurisé via Stripe</p>
                                             ` : (!isPaid && user.modePaiement === 'virement') ? `
-                                                <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Votre badge sera activé dès réception de votre virement.</p>
+                                                <p style="color: #0369a1; font-size: 14px; margin-bottom: 12px;">ℹ️ Votre virement est en cours de traitement. Votre badge sera activé dès réception.</p>
                                                 <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px; display: inline-block;">
-                                                   🏦 Voir mon Espace
+                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
+                                                    🏛️ Accéder à mon Espace
                                                 </a>
                                             ` : (!isPaid && (user.modePaiement === 'especes' || user.modePaiement === 'sur_place')) ? `
-                                                <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">Prévoyez de régler en espèces le jour du congrès.</p>
+                                                <p style="color: #0369a1; font-size: 14px; margin-bottom: 12px;">✅ Votre place est réservée. Réglez en espèces le jour du congrès.</p>
                                                 <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px; display: inline-block;">
-                                                   🎫 Consulter mon Espace
+                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
+                                                    📋 Consulter mon Espace
                                                 </a>
                                             ` : `
                                                 <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 16px; display: inline-block;">
-                                                   ✅ Accéder à mon Espace
+                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
+                                                    🎫 Accéder à mon Espace
                                                 </a>
                                             `}
                                         </div>
