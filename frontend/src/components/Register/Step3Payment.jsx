@@ -3,7 +3,7 @@ import { Building, Banknote, CreditCard, Check } from 'lucide-react';
 import FormInput from '../Form/FormInput';
 import StripePaymentForm from './StripePaymentForm';
 
-const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb, setFormData, onStripeSuccess, setGlobalLoading }) => {
+const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb, setFormData, onStripeSuccess, setGlobalLoading, isStripeRevealed }) => {
     return (
         <div className="space-y-8 animate-fadeIn">
             <h2 className="text-2xl font-bold text-white mb-6">Paiement & Validation</h2>
@@ -112,13 +112,19 @@ const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb,
                         )}
 
                         {formData.modePaiement === 'carte' && (
-                            <StripePaymentForm 
-                                amount={totalPrice} 
-                                currency={currency} 
-                                email={formData.email} 
-                                onSuccess={onStripeSuccess}
-                                onLoading={setGlobalLoading}
-                            />
+                            isStripeRevealed ? (
+                                <StripePaymentForm 
+                                    amount={totalPrice} 
+                                    currency={currency} 
+                                    email={formData.email} 
+                                    onSuccess={onStripeSuccess}
+                                    onLoading={setGlobalLoading}
+                                />
+                            ) : (
+                                <div className="mt-4 p-5 bg-slate-800/80 border border-slate-700/50 rounded-xl text-center">
+                                    <p className="text-slate-400">Cliquez sur "Vérifier et Confirmer" en bas de page pour valider vos informations et accéder au paiement sécurisé.</p>
+                                </div>
+                            )
                         )}
                     </div>
                 </div>
