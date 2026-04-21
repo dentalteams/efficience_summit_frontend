@@ -285,7 +285,7 @@ SecToken: ${secureToken}`;
                         </div>
 
                         {/* 🆕 Détails de l'Inscription */}
-                        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
+                        <div id="payment" className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
                             <h3 className="text-2xl font-bold text-white mb-6">Détails de l'Inscription</h3>
                             
                             <div className="space-y-4 mb-6">
