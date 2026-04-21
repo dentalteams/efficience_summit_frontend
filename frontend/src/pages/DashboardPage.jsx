@@ -52,18 +52,32 @@ const DashboardPage = () => {
     const generateSecureQRData = (participant, isPrincipal = true) => {
         const isPaid = user.paymentStatus === 'paid';
         const status = isPaid ? 'Payé' : 'Non payé';
-        // Création d'un token basique pour authentifier le billet avec une clé visuelle
         const rawToken = `${participant?.registrationNumber || user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
         const secureToken = btoa(rawToken).substring(0, 10).toUpperCase();
 
+        // Calcul du total des tickets repas (principal + tous les accompagnants)
+        const additionalParticipants = user.additionalParticipants || [];
+        const totalTickets = (parseInt(user.ticketsRepas) || 0) + additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0);
+
         if (isPrincipal) {
+            // Liste des accompagnants formatée pour le QR
+            let accompagnantLines = '';
+            if (additionalParticipants.length > 0) {
+                accompagnantLines = '\nACCOMPAGNANTS:';
+                additionalParticipants.forEach((p, i) => {
+                    const pRole = p.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (p.role?.toUpperCase() || 'ASSISTANTE');
+                    accompagnantLines += `\n  ${i + 1}. ${p.prenom?.toUpperCase()} ${p.nom?.toUpperCase()} (${pRole}) - Repas: ${parseInt(p.ticketsRepas) || 0}`;
+                });
+            }
+
             return `--- SUMMIT EFFICIENCE 2026 ---
 ID: ${user.registrationNumber}
 Participant: ${user.prenom?.toUpperCase()} ${user.nom?.toUpperCase()}
 Role: ${user.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : user.role?.toUpperCase()}
 Paiement: ${status}
-Tickets Repas: ${user.ticketsRepas || 0}
-Assistantes avec vous: ${(user.nbParticipants || 1) - 1}
+Tickets Repas (perso): ${parseInt(user.ticketsRepas) || 0}
+Total Tickets (groupe): ${totalTickets}
+Nb Accompagnants: ${additionalParticipants.length}${accompagnantLines}
 ------------------------------
 SecToken: ${secureToken}`;
         } else {
@@ -71,9 +85,9 @@ SecToken: ${secureToken}`;
 ID: ${participant.registrationNumber || 'Billet-Lie'}
 Participant: ${participant.prenom?.toUpperCase()} ${participant.nom?.toUpperCase()}
 Role: ${participant.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (participant.role?.toUpperCase() || 'ASSISTANTE')}
-Lie au compte de: ${user.nom?.toUpperCase()}
+Lie au compte de: ${user.prenom?.toUpperCase()} ${user.nom?.toUpperCase()} (${user.registrationNumber})
 Paiement: ${status}
-Tickets Repas: ${participant.ticketsRepas || 0}
+Tickets Repas: ${parseInt(participant.ticketsRepas) || 0}
 ------------------------------
 SecToken: ${secureToken}`;
         }
