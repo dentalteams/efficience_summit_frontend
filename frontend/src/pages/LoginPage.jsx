@@ -3,11 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, AlertCircle, X, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
     const { t } = useTranslation();
     const [formData, setFormData] = useState({
@@ -27,7 +29,9 @@ const LoginPage = () => {
         const result = await login(formData.email, formData.password);
 
         if (result.success) {
-            navigate('/dashboard');
+            const from = location.state?.from?.pathname || '/dashboard';
+            const hash = location.state?.from?.hash || '';
+            navigate(from + hash, { replace: true });
         } else {
             setError(result.error);
         }

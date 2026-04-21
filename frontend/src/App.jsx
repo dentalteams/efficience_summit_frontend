@@ -13,7 +13,8 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  const location = useLocation();
+  return isAuthenticated ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 // Admin Route Component
