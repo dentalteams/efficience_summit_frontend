@@ -204,8 +204,11 @@ SecToken: ${secureToken}`;
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
                                     <span className="text-blue-200 text-sm">Statut</span>
-                                    <span className="px-3 py-1 bg-green-500/20 text-green-300 rounded-lg text-sm font-semibold border border-green-500/30">
-                                        Confirmé
+                                    <span className={`px-3 py-1 rounded-lg text-sm font-semibold border ${user.paymentStatus === 'paid'
+                                        ? 'bg-green-500/20 text-green-300 border-green-500/30'
+                                        : 'bg-amber-500/20 text-amber-500 border-amber-500/30'
+                                        }`}>
+                                        {user.paymentStatus === 'paid' ? 'Confirmé' : 'En attente'}
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
@@ -217,12 +220,9 @@ SecToken: ${secureToken}`;
                                     </span>
                                 </div>
                                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
-                                    <span className="text-blue-200 text-sm">Paiement</span>
-                                    <span className={`px-3 py-1 rounded-lg text-sm font-semibold border ${user.paymentStatus === 'paid'
-                                        ? 'bg-green-500/20 text-green-300 border-green-500/30'
-                                        : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-                                        }`}>
-                                        {user.paymentStatus === 'paid' ? 'Payé' : 'En attente'}
+                                    <span className="text-blue-200 text-sm">Paiement via</span>
+                                    <span className="text-white font-semibold text-sm capitalize">
+                                        {user.modePaiement?.replace('_', ' ')}
                                     </span>
                                 </div>
                             </div>
@@ -322,35 +322,58 @@ SecToken: ${secureToken}`;
                                 </div>
                                 
                                 {user.paymentStatus !== 'paid' && (
-                                    <div ref={paymentRef} id="payment" className={`p-4 border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20 ring-2 ring-red-500/0 transition-all' : 'bg-blue-500/10 border-blue-500/20'}`}>
-                                        <div className={`text-sm flex-1 ${user.modePaiement === 'carte' ? 'text-red-200' : 'text-blue-200'}`}>
-                                            {user.modePaiement === 'carte' 
-                                                ? "Votre paiement n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."
-                                                : user.modePaiement === 'virement'
-                                                    ? "Nous sommes en attente de la réception de votre virement bancaire. Votre badge sera activé dès réception."
-                                                    : "Vous avez opté pour un paiement sur place. Prévoyez de régler en espèces le jour de l'événement."
-                                            }
-                                        </div>
-                                        {user.modePaiement === 'carte' && (
-                                            <button 
-                                                onClick={async () => {
-                                                    try {
-                                                        const res = await axios.post('/api/payment/create-checkout-session', { userId: user._id });
-                                                        if (res.data?.url) {
-                                                            window.location.href = res.data.url;
-                                                        } else {
-                                                            setMessage({text: 'Redirection vers le paiement en cours de configuration locale', type: 'error'});
+                                    <div ref={paymentRef} id="payment" className={`p-6 border rounded-2xl flex flex-col gap-6 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                            <div className={`text-sm flex-1 ${user.modePaiement === 'carte' ? 'text-red-200' : 'text-blue-200'}`}>
+                                                <p className="font-bold text-lg mb-1">
+                                                    {user.modePaiement === 'carte' ? '⚠️ Règlement requis' : 'ℹ️ Information de règlement'}
+                                                </p>
+                                                {user.modePaiement === 'carte' 
+                                                    ? "Votre paiement par carte n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."
+                                                    : user.modePaiement === 'virement'
+                                                        ? "Nous sommes en attente de votre virement bancaire. Voici nos coordonnées pour effectuer le transfert :"
+                                                        : "Vous avez opté pour un paiement sur place. Veuillez prévoir le règlement en espèces le jour de l'événement à l'accueil."
+                                                }
+                                            </div>
+                                            {user.modePaiement === 'carte' && (
+                                                <button 
+                                                    onClick={async () => {
+                                                        try {
+                                                            const res = await axios.post('/api/payment/create-checkout-session', { userId: user._id });
+                                                            if (res.data?.url) {
+                                                                window.location.href = res.data.url;
+                                                            } else {
+                                                                setMessage({text: 'Configuration du paiement...', type: 'error'});
+                                                            }
+                                                        } catch (err) {
+                                                            setMessage({text: 'Service de paiement indisponible', type: 'error'});
                                                         }
-                                                    } catch (err) {
-                                                        console.error(err);
-                                                        setMessage({text: 'Service de paiement indisponible momentanément', type: 'error'});
-                                                    }
-                                                }}
-                                                className="whitespace-nowrap px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-bold shadow-lg transition-all"
-                                            >
-                                                Payer en ligne
-                                            </button>
+                                                    }}
+                                                    className="whitespace-nowrap px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-bold shadow-xl transition-all transform hover:scale-105"
+                                                >
+                                                    💳 Payer par Carte
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {user.modePaiement === 'virement' && (
+                                            <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30 animate-fadeIn">
+                                                <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3">Coordonnées Bancaires (RIB/RIP)</p>
+                                                <div className="flex flex-col gap-3">
+                                                    <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-cyan-400 text-lg text-center font-bold tracking-tighter break-all">
+                                                        {user.pays === 'Tunisie' ? 'TN59 0800 2000 6410 6100 8446' : 'FR76 1009 6181 3000 0528 0620 156'}
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-500 italic text-center">
+                                                        Note : Précisez "SUMMIT - {user.nom} {user.prenom}" en libellé de votre virement.
+                                                    </p>
+                                                </div>
+                                            </div>
                                         )}
+
+                                        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                                            <p className="text-[11px] text-slate-500">Souhaitez-vous changer de mode de paiement ? Contactez le support.</p>
+                                            <Mail className="w-4 h-4 text-slate-600" />
+                                        </div>
                                     </div>
                                 )}
 
