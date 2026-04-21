@@ -119,18 +119,12 @@ router.post('/register', async (req, res) => {
             { expiresIn: '24h' },
             (err, token) => {
                 if (err) throw err;
+                // Return the full user object (excluding password)
+                const userObj = user.toObject();
+                delete userObj.password;
                 res.status(201).json({
                     token,
-                    user: {
-                        id: user.id,
-                        nom: user.nom,
-                        prenom: user.prenom,
-                        email: user.email,
-                        role: user.role,
-                        registrationNumber: user.registrationNumber,
-                        qrCode: user.qrCode, // Also pass the secure code to the frontend!
-                        paymentStatus: user.paymentStatus
-                    }
+                    user: userObj
                 });
             }
         );
@@ -178,20 +172,12 @@ router.post('/login', async (req, res) => {
             { expiresIn: '24h' },
             (err, token) => {
                 if (err) throw err;
+                // Return the full user object (excluding password) for completeness
+                const userObj = user.toObject();
+                delete userObj.password;
                 res.json({
                     token,
-                    user: {
-                        id: user.id,
-                        nom: user.nom,
-                        prenom: user.prenom,
-                        email: user.email,
-                        role: user.role,
-                        registrationNumber: user.registrationNumber,
-                        qrCode: user.qrCode, // Ensure qrCode is returned on login!
-                        paymentStatus: user.paymentStatus,
-                        nbParticipants: user.nbParticipants,
-                        additionalParticipants: user.additionalParticipants
-                    }
+                    user: userObj
                 });
             }
         );
@@ -300,6 +286,33 @@ router.post('/resend-confirmation', async (req, res) => {
         } else {
             res.status(500).json({ message: "Erreur lors de l'envoi de l'email. Veuillez vérifier l'adresse email et le mot de passe d'application dans le fichier .env." });
         }
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
+// @route   PUT api/auth/update-payment-mode
+// @desc    Update user payment mode
+// @access  Private
+router.put('/update-payment-mode', auth, async (req, res) => {
+    try {
+        const { modePaiement } = req.body;
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé' });
+        }
+
+        const validModes = ['virement', 'sur_place', 'especes', 'carte'];
+        if (!validModes.includes(modePaiement)) {
+            return res.status(400).json({ message: 'Mode de paiement invalide' });
+        }
+
+        user.modePaiement = modePaiement;
+        await user.save();
+
+        res.json({ message: 'Mode de paiement mis à jour', modePaiement });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Erreur serveur' });

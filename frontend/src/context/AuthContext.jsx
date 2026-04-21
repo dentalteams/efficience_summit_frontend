@@ -19,7 +19,8 @@ export const AuthProvider = ({ children }) => {
             if (token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
                 const response = await axios.get('/api/auth/me');
-                setUser(response.data.user);
+                // /api/auth/me returns the user object directly (not {user: ...})
+                setUser(response.data);
             }
         } catch (error) {
             console.error('Auth check failed:', error);

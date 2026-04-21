@@ -607,6 +607,7 @@ const AdminDashboard = () => {
                                                 <th className="px-6 py-5">Participant & Badge</th>
                                                 <th className="px-6 py-5">Contact & Lieu</th>
                                                 <th className="px-6 py-5">Role & Mode</th>
+                                                <th className="px-6 py-5">Repas</th>
                                                 <th className="px-6 py-5">Statut Paiement</th>
                                                 <th className="px-6 py-5 text-right">Actions Manuelles</th>
                                             </tr>
@@ -665,6 +666,12 @@ const AdminDashboard = () => {
                                                                 {u.modePaiement === 'carte' ? <CreditCard size={12} className="mr-1.5" /> : <Save size={12} className="mr-1.5" />}
                                                                 {u.modePaiement?.toUpperCase() || 'ESPECES'}
                                                             </div>
+                                                        </div>
+                                                    </td>
+
+                                                    <td className="px-6 py-6 border-none">
+                                                        <div className="text-sm font-bold text-[var(--text-main)]">
+                                                            {(parseInt(u.ticketsRepas) || 0) + (u.additionalParticipants?.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0) || 0)} <span className="text-[11px] text-[var(--text-muted)]">tickets</span>
                                                         </div>
                                                     </td>
 

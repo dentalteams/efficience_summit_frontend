@@ -28,7 +28,7 @@ const DashboardPage = () => {
             return `--- SUMMIT EFFICIENCE 2026 ---
 ID: ${user.registrationNumber}
 Participant: ${user.prenom?.toUpperCase()} ${user.nom?.toUpperCase()}
-Role: ${user.role?.toUpperCase()}
+Role: ${user.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : user.role?.toUpperCase()}
 Paiement: ${status}
 Tickets Repas: ${user.ticketsRepas || 0}
 Assistantes avec vous: ${(user.nbParticipants || 1) - 1}
@@ -38,7 +38,7 @@ SecToken: ${secureToken}`;
             return `--- SUMMIT EFFICIENCE 2026 ---
 ID: ${participant.registrationNumber || 'Billet-Lie'}
 Participant: ${participant.prenom?.toUpperCase()} ${participant.nom?.toUpperCase()}
-Role: ${participant.role?.toUpperCase() || 'ASSISTANTE'}
+Role: ${participant.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (participant.role?.toUpperCase() || 'ASSISTANTE')}
 Lie au compte de: ${user.nom?.toUpperCase()}
 Paiement: ${status}
 Tickets Repas: ${participant.ticketsRepas || 0}
@@ -154,19 +154,11 @@ SecToken: ${secureToken}`;
                                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
                                     <span className="text-blue-200 text-sm">Rôle</span>
                                     <span className="text-white font-semibold text-sm capitalize">
-                                        {user.role === 'praticien' ? 'Praticien' :
+                                        {user.role === 'praticien' ? 'Chirurgien-dentiste' :
                                             user.role === 'assistante' ? 'Assistante' :
                                                 user.role === 'exposant' ? 'Exposant' : 'Étudiant'}
                                     </span>
                                 </div>
-                                {user.nbParticipants > 1 && (
-                                    <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
-                                        <span className="text-blue-200 text-sm">Participants</span>
-                                        <span className="text-white font-semibold text-sm">
-                                            {user.nbParticipants} personnes
-                                        </span>
-                                    </div>
-                                )}
                                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl">
                                     <span className="text-blue-200 text-sm">Paiement</span>
                                     <span className={`px-3 py-1 rounded-lg text-sm font-semibold border ${user.paymentStatus === 'paid'
@@ -246,6 +238,100 @@ SecToken: ${secureToken}`;
                             </div>
                         </div>
 
+                        {/* 🆕 Détails de l'Inscription */}
+                        <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
+                            <h3 className="text-2xl font-bold text-white mb-6">Détails de l'Inscription</h3>
+                            
+                            <div className="space-y-4 mb-6">
+                                <div className="flex items-start justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                            <span className="text-xl">💰</span>
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-semibold">Montant Total</p>
+                                            <p className="text-sm text-blue-300 capitalize">Mode: {user.modePaiement?.replace('_', ' ')}</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right flex flex-col items-end">
+                                        <span className="text-xl font-bold text-white">{user.totalPrice || 0} {user.currency || 'TND'}</span>
+                                        <span className={`mt-1 text-xs px-2 py-1 rounded-md font-semibold border ${user.paymentStatus === 'paid'
+                                            ? 'bg-green-500/20 text-green-300 border-green-500/30'
+                                            : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
+                                            }`}>
+                                            {user.paymentStatus === 'paid' ? 'Payé' : 'En attente'}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                {user.paymentStatus !== 'paid' && (
+                                    <div className={`p-4 border rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
+                                        <div className={`text-sm flex-1 ${user.modePaiement === 'carte' ? 'text-red-200' : 'text-blue-200'}`}>
+                                            {user.modePaiement === 'carte' 
+                                                ? "Votre paiement n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."
+                                                : user.modePaiement === 'virement'
+                                                    ? "Nous sommes en attente de la réception de votre virement bancaire. Votre badge sera activé dès réception."
+                                                    : "Vous avez opté pour un paiement sur place. Prévoyez de régler en espèces le jour de l'événement."
+                                            }
+                                        </div>
+                                        {user.modePaiement === 'carte' && (
+                                            <button 
+                                                onClick={async () => {
+                                                    try {
+                                                        const res = await axios.post('/api/payment/create-checkout-session', { userId: user._id });
+                                                        if (res.data?.url) {
+                                                            window.location.href = res.data.url;
+                                                        } else {
+                                                            setMessage({text: 'Redirection vers le paiement en cours de configuration locale', type: 'error'});
+                                                        }
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                        setMessage({text: 'Service de paiement indisponible momentanément', type: 'error'});
+                                                    }
+                                                }}
+                                                className="whitespace-nowrap px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg font-bold shadow-lg transition-all"
+                                            >
+                                                Payer en ligne
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                                        <p className="text-sm text-slate-400 mb-1">Vos tickets repas</p>
+                                        <p className="text-xl font-bold text-white">
+                                            {(parseInt(user.ticketsRepas) || 0) + (user.additionalParticipants?.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0) || 0)}
+                                        </p>
+                                    </div>
+                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                                        <p className="text-sm text-slate-400 mb-1">Participants suppl.</p>
+                                        <p className="text-xl font-bold text-white">{(user.nbParticipants || 1) - 1}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {user.additionalParticipants?.length > 0 && (
+                                <div className="mt-6 border-t border-slate-700/50 pt-6">
+                                    <h4 className="text-lg font-semibold text-white mb-4">Détails des accompagnants ({user.additionalParticipants.length})</h4>
+                                    <div className="space-y-3">
+                                        {user.additionalParticipants.map((ap, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                                                <div>
+                                                    <p className="text-white font-medium">{ap.prenom} {ap.nom}</p>
+                                                    <p className="text-xs text-blue-300 font-semibold uppercase tracking-wider">{ap.role === 'praticien' ? 'Chirurgien-dentiste' : ap.role}</p>
+                                                </div>
+                                                <div className="bg-slate-900 px-3 py-1.5 rounded-md border border-slate-700 text-center">
+                                                    <p className="text-[10px] text-blue-200 uppercase tracking-widest">Repas</p>
+                                                    <p className="font-bold text-white text-sm">{ap.ticketsRepas || 0}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8">
                             <h3 className="text-2xl font-bold text-white mb-6">Informations du Congrès</h3>
 
@@ -294,37 +380,6 @@ SecToken: ${secureToken}`;
                             </div>
                         </div>
 
-                        {user.additionalParticipants && user.additionalParticipants.length > 0 && (
-                            <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mt-6">
-                                <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
-                                    <User className="w-6 h-6 mr-3 text-cyan-400" />
-                                    Billets & QR Codes (Additionnels)
-                                </h3>
-                                <div className="grid sm:grid-cols-2 gap-6">
-                                    {user.additionalParticipants.map((p, idx) => (
-                                        <div key={idx} className="p-6 bg-slate-900/50 rounded-2xl border border-blue-500/10 flex flex-col items-center relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 bg-blue-500/20 text-blue-300 px-3 py-1 rounded-bl-xl text-xs font-bold capitalize">
-                                                {p.role || 'assistante'}
-                                            </div>
-                                            <p className="text-cyan-400 text-xs font-bold mb-2 mt-2 w-full text-left">PARTICIPANT #{idx + 2}</p>
-                                            <p className="text-white font-bold mb-4 w-full text-left text-lg">{p.prenom} {p.nom}</p>
-
-                                            <div className="bg-white p-4 rounded-xl shadow-lg">
-                                                <QRCodeSVG
-                                                    value={generateSecureQRData(p, false)}
-                                                    size={140}
-                                                    level="M"
-                                                    includeMargin={true}
-                                                />
-                                            </div>
-                                            <p className="text-center text-slate-500 font-mono text-xs mt-3">
-                                                {p.registrationNumber}
-                                            </p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
