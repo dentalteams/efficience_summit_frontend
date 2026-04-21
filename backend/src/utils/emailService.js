@@ -22,13 +22,11 @@ const isEmailConfigured = () => {
 
 const sendRegistrationEmail = async (user, defaultPassword = null) => {
     try {
-
         const isPaid = user.paymentStatus === 'paid';
-        const status = isPaid ? 'Payé' : 'Non payé';
+        const statusText = isPaid ? 'PAYÉ' : 'EN ATTENTE';
         const rawToken = `${user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
         const secureToken = Buffer.from(rawToken).toString('base64').substring(0, 10).toUpperCase();
 
-        // Calcul du total des tickets (principal + accompagnants)
         const additionalParticipants = user.additionalParticipants || [];
         const totalTickets = (parseInt(user.ticketsRepas) || 0) + additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0);
 
@@ -46,164 +44,117 @@ const sendRegistrationEmail = async (user, defaultPassword = null) => {
 ID: ${user.registrationNumber}
 Participant: ${(user.prenom || '').toUpperCase()} ${(user.nom || '').toUpperCase()}
 Role: ${user.role === 'praticien' ? 'CHIRURGIEN-DENTISTE' : (user.role || '').toUpperCase()}
-Paiement: ${status}
+Paiement: ${statusText}
 Tickets Repas (perso): ${parseInt(user.ticketsRepas) || 0}
 Total Tickets (groupe): ${totalTickets}
 Nb Accompagnants: ${additionalParticipants.length}${accompagnantQrLines}
 ------------------------------
 SecToken: ${secureToken}`;
 
-        // Generate QR Code Image as DataURL containing the rich text
         const qrCodeDataUrl = await QRCode.toDataURL(qrText);
+        const frontendUrl = process.env.FRONTEND_URL || 'https://summit-efficience.org';
 
-        const frontendUrl = process.env.FRONTEND_URL;
-
+        // Bloc Mot de passe si nouveau compte
         const passwordBlock = defaultPassword ? `
-            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 15px; border-radius: 4px;">
-                <p style="margin: 0; color: #856404;"><strong>Accès à votre espace personnel :</strong></p>
-                <p style="margin: 5px 0 0 0; color: #856404; font-family: monospace; font-size: 16px;">Mot de passe pro-visoire : <strong>${defaultPassword}</strong></p>
-                <p style="margin: 5px 0 0 0; color: #856404; font-size: 13px;">(Veuillez changer ce mot de passe dès votre première connexion)</p>
+            <div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; margin: 20px 0; border-radius: 8px;">
+                <p style="margin: 0; color: #856404; font-weight: bold;">🔑 Vos accès personnels :</p>
+                <p style="margin: 10px 0 0 0; color: #856404; font-family: monospace; font-size: 18px;">Mot de passe : <strong>${defaultPassword}</strong></p>
+                <p style="margin: 5px 0 0 0; color: #856404; font-size: 12px;">(Changez-le lors de votre première connexion)</p>
             </div>
         ` : '';
 
-        let unpaidBlock = '';
-        if (!isPaid) {
-            if (user.modePaiement === 'especes' || user.modePaiement === 'sur_place') {
-                unpaidBlock = `
-                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">ℹ️ Règlement sur place</h3>
-                    <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
-                        Votre passe a bien été réservé. Vous avez choisi de régler l'inscription <strong>en espèces sur place</strong> le jour du congrès.
-                    </p>
-                </div>`;
-            } else if (user.modePaiement === 'virement') {
-                unpaidBlock = `
-                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">ℹ️ Virement en attente</h3>
-                    <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
-                        Votre passe a bien été réservé. Nous sommes en attente de la réception de votre virement bancaire pour valider définitivement votre badge.
-                    </p>
-                </div>`;
-            } else {
-                unpaidBlock = `
-                <div style="background-color: #ffe0e0; border-left: 4px solid #f44336; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <h3 style="margin: 0; color: #d32f2f; font-size: 18px;">⚠️ Action Requise : Paiement en attente</h3>
-                    <p style="margin: 8px 0 0 0; color: #b71c1c; font-size: 15px;">
-                        Votre passe a bien été réservé, mais <strong>votre inscription n'est pas encore finalisée</strong> car nous n'avons pas reçu votre paiement en ligne.
-                    </p>
-                    <p style="margin: 8px 0 0 0; color: #b71c1c; font-size: 14px;">
-                        Veuillez finaliser votre règlement (en ligne depuis votre espace ou sur place le Jour J) pour activer votre badge officiel.
-                    </p>
-                </div>`;
-            }
+        // Liste html des accompagnants
+        let additionalParticipantsHtml = '';
+        if (additionalParticipants.length > 0) {
+            additionalParticipantsHtml = `
+                <div style="margin-top: 15px; padding: 10px; background: #f1f5f9; border-radius: 8px;">
+                    <p style="margin:0 0 5px 0; font-weight:bold; font-size:13px; color:#475569;">ACCOMPAGNANTS :</p>
+                    <ul style="margin:0; padding-left:15px; font-size:12px; color:#475569;">
+                        ${additionalParticipants.map(ap => `
+                            <li><strong>${ap.prenom} ${ap.nom}</strong> (${ap.role}) - ${ap.ticketsRepas || 0} repas</li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
         }
 
-                        let additionalParticipantsHtml = '';
-                        if (user.additionalParticipants && user.additionalParticipants.length > 0) {
-                            additionalParticipantsHtml = `
-                                <h4 style="margin: 15px 0 5px 0; color: #334155; font-size: 15px;">Participants Supplémentaires :</h4>
-                                <ul style="padding-left: 20px; margin-top: 0; color: #475569;">
-                                    ${user.additionalParticipants.map(ap => `
-                                        <li><strong>${ap.prenom} ${ap.nom}</strong> (${ap.role === 'praticien' ? 'Chirurgien-dentiste' : ap.role}) - ${ap.ticketsRepas || 0} ticket(s) repas</li>
-                                    `).join('')}
-                                </ul>
-                            `;
-                        }
+        const mailOptions = {
+            from: `"Efficience Summit 2026" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: `Confirmation d'inscription #${user.registrationNumber} - Efficience Summit`,
+            html: `
+                <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 35px 20px; text-align: center; color: white;">
+                        <h1 style="margin: 0; font-size: 26px; font-weight: 800;">SUMMIT EFFICIENCE 2026</h1>
+                        <p style="margin: 5px 0 0 0; opacity: 0.9;">Votre Pass Digital Officiel</p>
+                    </div>
 
-                        console.log(`Tentative d'envoi d'email à: ${user.email} (Sujet: Confirmation d'inscription)`);
-                        const mailOptions = {
-                            from: `"Efficience Summit 2026" <${process.env.EMAIL_USER}>`,
-                            to: user.email,
-                            subject: 'Confirmation d\'inscription - Efficience Summit 2026',
-                            html: `
-                                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background-color: #ffffff;">
-                                    <div style="background: linear-gradient(135deg, #2563eb 0%, #0891b2 100%); padding: 40px 20px; text-align: center;">
-                                        <h1 style="color: white; margin: 0; font-size: 28px; letter-spacing: -0.5px;">Efficience Summit 2026</h1>
-                                        <p style="color: rgba(255,255,255,0.8); margin-top: 10px; font-size: 16px;">Votre pass officiel est prêt !</p>
-                                    </div>
-                                    
-                                    <div style="padding: 40px 30px; color: #1e293b;">
-                                        <h2 style="font-size: 22px; margin-bottom: 20px; color: #0f172a;">Bonjour Dr. ${user.prenom} ${user.nom},</h2>
-                                        
-                                        <p style="line-height: 1.6; font-size: 16px; color: #475569;">
-                                            Nous avons le plaisir de vous confirmer votre inscription au <strong>Summit Efficience 2026</strong>. 
-                                            Vous trouverez ci-dessous vos informations personnelles ainsi que votre badge d'accès unique sécurisé.
-                                        </p>
+                    <div style="padding: 30px; color: #1e293b;">
+                        <h2 style="font-size: 20px; color: #0f172a; margin-top: 0;">Bonjour Dr. ${user.prenom} ${user.nom},</h2>
+                        <p style="line-height: 1.6; font-size: 15px; color: #475569;">
+                            Nous confirmons votre inscription au <strong>Summit Efficience 2026</strong>. Voici les détails de votre pass et votre badge d'accès.
+                        </p>
 
-                                        ${passwordBlock}
-                                        ${unpaidBlock}
+                        ${passwordBlock}
 
-                                        <div style="background-color: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid #edf2f7;">
-                                            <h3 style="margin-top: 0; font-size: 18px; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Détails de votre Inscription</h3>
-                                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b; width: 140px;"><strong>Montant Total :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b; font-weight: bold; font-size: 16px;">${user.totalPrice || 0} ${user.currency || 'TND'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b;"><strong>Paiement :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b;">${user.modePaiement} - ${isPaid ? 'Payé' : 'En attente'}</td>
-                                                </tr>
-                                                <tr>
-                                                     <td style="padding: 8px 0; color: #64748b;"><strong>Tickets Repas (perso) :</strong></td>
-                                                     <td style="padding: 8px 0; color: #1e293b;">${parseInt(user.ticketsRepas) || 0}</td>
-                                                 </tr>
-                                                 <tr>
-                                                     <td style="padding: 8px 0; color: #64748b;"><strong>Total Tickets (groupe) :</strong></td>
-                                                     <td style="padding: 8px 0; color: #1e293b; font-weight: bold;">${totalTickets}</td>
-                                                 </tr>
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b;"><strong>Accompagnants :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b;">${(user.nbParticipants || 1) - 1}</td>
-                                                </tr>
-                                            </table>
-                                            ${additionalParticipantsHtml}
-                                        </div>
+                        <!-- Status Alert -->
+                        ${!isPaid ? `
+                            <div style="background-color: #fef2f2; border: 1px solid #fee2e2; padding: 15px; margin: 20px 0; border-radius: 12px; text-align: center;">
+                                <p style="margin: 0; color: #dc2626; font-weight: bold; font-size: 14px;">⚠️ PAIEMENT EN ATTENTE</p>
+                                <p style="margin: 5px 0 0 0; color: #991b1b; font-size: 13px;">Merci de finaliser votre règlement par carte ou sur place pour activer votre badge.</p>
+                            </div>
+                        ` : `
+                            <div style="background-color: #f0fdf4; border: 1px solid #dcfce7; padding: 15px; margin: 20px 0; border-radius: 12px; text-align: center;">
+                                <p style="margin: 0; color: #16a34a; font-weight: bold; font-size: 14px;">✅ INSCRIPTION CONFIRMÉE</p>
+                                <p style="margin: 5px 0 0 0; color: #166534; font-size: 13px;">Votre paiement a été validé. À très bientôt à Monastir !</p>
+                            </div>
+                        `}
 
-                                        <div style="background-color: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid #edf2f7;">
-                                            <h3 style="margin-top: 0; font-size: 18px; color: #2563eb; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">Détails de l'événement</h3>
-                                            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b; width: 100px;"><strong>Dates :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b;">15 & 16 Mai 2026</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b;"><strong>Lieu :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b;">Iberostar Kuriat Palace, Monastir</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 8px 0; color: #64748b;"><strong>Numéro :</strong></td>
-                                                    <td style="padding: 8px 0; color: #1e293b; font-family: monospace; font-weight: bold;">${user.registrationNumber}</td>
-                                                </tr>
-                                            </table>
-                                        </div>
+                        <!-- Details Table -->
+                        <div style="background-color: #f8fafc; border: 1px solid #edf2f7; border-radius: 16px; padding: 20px; margin: 25px 0;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                                <tr>
+                                    <td style="padding: 6px 0; color: #64748b;">N° Inscription :</td>
+                                    <td style="padding: 6px 0; color: #0f172a; text-align: right; font-weight: bold;">${user.registrationNumber}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #64748b;">Rôle :</td>
+                                    <td style="padding: 6px 0; color: #0f172a; text-align: right; font-weight: 600;">${user.role?.toUpperCase()}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #64748b;">Total à payer :</td>
+                                    <td style="padding: 6px 0; color: #0f172a; text-align: right; font-weight: 800; font-size: 16px;">${user.totalPrice || 0} ${user.currency || 'TND'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 6px 0; color: #64748b;">Tickets Repas :</td>
+                                    <td style="padding: 6px 0; color: #0f172a; text-align: right;">${totalTickets} ticket(s)</td>
+                                </tr>
+                            </table>
+                            ${additionalParticipantsHtml}
+                        </div>
 
-                                        <div style="text-align: center; margin: 40px 0;">
-                                            <p style="margin-bottom: 15px; color: #64748b; font-size: 14px;">PRÉSENTEZ CE QR CODE À L'ENTRÉE</p>
-                                            <img src="${qrCodeDataUrl}" alt="Badge QR Code" style="width: 200px; height: 200px; border: 4px solid #f1f5f9; border-radius: 12px; padding: 10px; background: white;" />
-                                        </div>
+                        <!-- QR Code Section -->
+                        <div style="text-align: center; margin: 30px 0; padding: 20px; border: 2px dashed #e2e8f0; border-radius: 20px;">
+                            <p style="margin: 0 0 15px 0; font-weight: bold; color: #64748b; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;">Badge de contrôle à présenter</p>
+                            <img src="${qrCodeDataUrl}" alt="QR Code Badge" style="width: 180px; height: 180px;" />
+                            <p style="margin: 10px 0 0 0; font-family: monospace; font-size: 12px; color: #94a3b8;">${secureToken}</p>
+                        </div>
 
-                                        <div style="text-align: center; margin-top: 40px;">
-                                            ${!isPaid ? `
-                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder à votre espace et finaliser votre paiement.</p>
-                                                <a href="${frontendUrl}/dashboard#payment" 
-                                                   style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
-                                                    💳 Finaliser mon Paiement
-                                                </a>
-                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement sécurisé par carte ou consultation de votre dossier</p>
-                                            ` : `
-                                                <p style="color: #059669; font-size: 14px; margin-bottom: 12px;">✅ Votre inscription est confirmée. Retrouvez votre badge et vos accès ci-dessous.</p>
-                                                <a href="${frontendUrl}/dashboard" 
-                                                   style="background: linear-gradient(135deg, #2563eb, #0891b2); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px;">
-                                                    🎫 Accéder à mon Badge
-                                                </a>
-                                            `}
-                                        </div>
-                                    </div>
+                        <!-- Action Button -->
+                        <div style="text-align: center; margin-top: 35px;">
+                            ${!isPaid ? `
+                                <a href="${frontendUrl}/dashboard#payment" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 16px 35px; border-radius: 14px; text-decoration: none; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(37,99,235,0.25);">💳 Finaliser mon Paiement</a>
+                            ` : `
+                                <a href="${frontendUrl}/dashboard" style="display: inline-block; background: #0f172a; color: #ffffff; padding: 16px 35px; border-radius: 14px; text-decoration: none; font-weight: bold; font-size: 16px;">🎫 Accéder à mon Espace</a>
+                            `}
+                        </div>
+                    </div>
 
-                    <div style="background-color: #f8fafc; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
-                        <p style="color: #94a3b8; font-size: 13px; margin: 0;">&copy; 2026 Efficience Summit 2026. Tous droits réservés.</p>
-                        <p style="color: #94a3b8; font-size: 13px; margin-top: 5px;">Hôtel Iberostar Kuriat Palace, Skanes, Monastir, Tunisie</p>
+                    <!-- Footer -->
+                    <div style="background-color: #f1f5f9; padding: 25px; text-align: center; border-top: 1px solid #e2e8f0;">
+                        <p style="margin: 0; font-size: 12px; color: #64748b; font-weight: bold;">Hôtel Iberostar Kuriat Palace, Monastir</p>
+                        <p style="margin: 5px 0 0 0; font-size: 11px; color: #94a3b8;">&copy; 2026 Efficience Summit 2026. Tous droits réservés.</p>
                     </div>
                 </div>
             `,
@@ -215,24 +166,17 @@ SecToken: ${secureToken}`;
             return true;
         } else {
             console.log('--- MODE DÉVELOPPEMENT : Email de confirmation simulé ---');
-            console.log('Destinataire:', user.email);
-            console.log('Badge Code:', user.registrationNumber);
             return true;
         }
     } catch (error) {
         console.error('ERREUR CRITIQUE NODEMAILER:', error.message);
-        if (error.code === 'EAUTH') {
-            console.error('Erreur d\'authentification Gmail. Vérifiez que l\'email et le mot de passe d\'application sont corrects.');
-        } else {
-            console.error('Code d\'erreur:', error.code);
-        }
         return false;
     }
 };
 
 const sendPasswordResetEmail = async (user, resetToken) => {
     try {
-        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const frontendUrl = process.env.FRONTEND_URL || 'https://summit-efficience.org';
         const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
 
         const mailOptions = {
@@ -249,26 +193,23 @@ const sendPasswordResetEmail = async (user, resetToken) => {
                         <p>Vous avez demandé la réinitialisation de votre mot de passe pour votre compte Efficience Summit 2026.</p>
                         <p>Veuillez cliquer sur le bouton ci-dessous pour choisir un nouveau mot de passe. Ce lien est valable pendant 1 heure.</p>
                         <div style="text-align: center; margin: 30px 0;">
-                            <a href="${resetUrl}" style="background: #2563eb; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">Réinitialiser mon mot de passe</a>
+                            <a href="${resetUrl}" style="background-color: #2563eb; color: white; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Réinitialiser mon mot de passe</a>
                         </div>
-                        <p>Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet email.</p>
+                        <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.</p>
                     </div>
                 </div>
             `
         };
 
-        if (isEmailConfigured()) {
-            await transporter.sendMail(mailOptions);
-            return true;
-        } else {
-            console.log('--- MODE DÉVELOPPEMENT : Email Reset simulé ---');
-            console.log('Lien de réinitialisation:', resetUrl);
-            return true;
-        }
+        await transporter.sendMail(mailOptions);
+        return true;
     } catch (error) {
-        console.error('Error sending reset email:', error);
+        console.error('Email password reset error:', error);
         return false;
     }
 };
 
-module.exports = { sendRegistrationEmail, sendPasswordResetEmail, isEmailConfigured };
+module.exports = {
+    sendRegistrationEmail,
+    sendPasswordResetEmail
+};
