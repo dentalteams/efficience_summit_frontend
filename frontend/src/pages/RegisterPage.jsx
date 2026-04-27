@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -41,7 +41,8 @@ const StepIndicator = ({ currentStep, totalSteps }) => {
 
 const RegisterPage = () => {
     const navigate = useNavigate();
-    const { register } = useAuth();
+    const location = useLocation();
+    const { register, user: authUser } = useAuth();
     const { t } = useTranslation();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -67,6 +68,28 @@ const RegisterPage = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [currency, setCurrency] = useState('TND');
     const [errors, setErrors] = useState({});
+
+    // Auto-resume step 3 if requested via URL
+    useEffect(() => {
+        if (location.search.includes('step=3')) {
+            if (!authUser) {
+                // Not logged in, redirect to login then come back
+                navigate('/login', { state: { from: { pathname: '/register', search: '?step=3' } } });
+            } else {
+                // Logged in, populate data and show modal
+                setFormData(prev => ({
+                    ...prev,
+                    ...authUser,
+                    password: '',
+                    confirmPassword: ''
+                }));
+                setStep(3);
+                setShowSummaryModal(true);
+                // Remove step=3 from URL so it doesn't trigger again on refresh
+                navigate('/register', { replace: true });
+            }
+        }
+    }, [authUser, location.search, navigate]);
 
     useEffect(() => {
         let price = 0;
@@ -419,17 +442,17 @@ const RegisterPage = () => {
                         )}
                         {showSummaryModal && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn">
-                                    <div className="p-6 md:p-8">
-                                        <h3 className="text-2xl font-bold text-white mb-6 border-b border-slate-800 pb-4">
+                                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn custom-scrollbar">
+                                    <div className="p-8 md:p-12">
+                                        <h3 className="text-3xl md:text-4xl font-black text-white mb-8 border-b border-slate-800 pb-5">
                                             Récapitulatif de votre inscription
                                         </h3>
                                         
-                                        <div className="space-y-6">
+                                        <div className="space-y-8">
                                             {/* Informations Générales */}
-                                            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                                                <h4 className="text-blue-400 font-semibold mb-3">Informations Personnelles</h4>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                                                <h4 className="text-blue-400 font-semibold mb-4 text-lg">Informations Personnelles</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
                                                     <div><span className="text-slate-400">Nom :</span> <span className="text-white font-medium">{formData.nom} {formData.prenom}</span></div>
                                                     <div><span className="text-slate-400">Email :</span> <span className="text-white font-medium">{formData.email}</span></div>
                                                     <div><span className="text-slate-400">Téléphone :</span> <span className="text-white font-medium">{formData.telephone}</span></div>
@@ -441,18 +464,18 @@ const RegisterPage = () => {
                                             </div>
 
                                             {/* Détails et Tickets */}
-                                            <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700">
-                                                <h4 className="text-blue-400 font-semibold mb-3">Détails de Réservation</h4>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
+                                                <h4 className="text-blue-400 font-semibold mb-4 text-lg">Détails de Réservation</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
                                                     <div><span className="text-slate-400">Zone :</span> <span className="text-white font-medium">{isMaghreb ? 'Maghreb' : 'Europe'}</span></div>
                                                     <div><span className="text-slate-400">Participants :</span> <span className="text-white font-medium">{formData.nbParticipants || 1}</span></div>
                                                     <div><span className="text-slate-400">Total Tickets Repas :</span> <span className="text-white font-medium">{(parseInt(formData.ticketsRepas) || 0) + formData.additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0)}</span></div>
                                                 </div>
                                                 
                                                 {formData.additionalParticipants.length > 0 && (
-                                                    <div className="mt-4 pt-4 border-t border-slate-700/50">
-                                                        <span className="text-slate-400 text-sm mb-2 block">Accompagnants :</span>
-                                                        <ul className="text-sm space-y-1">
+                                                    <div className="mt-5 pt-5 border-t border-slate-700/50">
+                                                        <span className="text-slate-400 text-base mb-3 block">Accompagnants :</span>
+                                                        <ul className="text-base space-y-2">
                                                             {formData.additionalParticipants.map((ap, i) => (
                                                                 <li key={i} className="text-slate-300">
                                                                     - <span className="text-white">{ap.prenom} {ap.nom}</span> ({ap.role === 'praticien' ? 'Chirurgien-dentiste' : ap.role})
@@ -464,25 +487,25 @@ const RegisterPage = () => {
                                             </div>
 
                                             {/* Paiement */}
-                                            <div className="bg-slate-800/50 p-4 rounded-xl border border-blue-500/30">
-                                                <h4 className="text-blue-400 font-semibold mb-3">Règlement</h4>
-                                                <div className="flex justify-between items-center bg-slate-900/50 p-3 rounded-lg border border-slate-700">
-                                                    <div>
-                                                        <span className="text-slate-400 text-sm block">Mode de paiement choisi :</span>
-                                                        <span className="text-white font-medium capitalize">{formData.modePaiement.replace('_', ' ')}</span>
+                                            <div className="bg-slate-800/50 p-6 rounded-xl border border-blue-500/30">
+                                                <h4 className="text-blue-400 font-semibold mb-4 text-lg">Règlement</h4>
+                                                <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/50 p-5 rounded-lg border border-slate-700 gap-4">
+                                                    <div className="w-full md:w-auto">
+                                                        <span className="text-slate-400 text-base block mb-1">Mode de paiement choisi :</span>
+                                                        <span className="text-white font-bold text-xl capitalize">{formData.modePaiement.replace('_', ' ')}</span>
                                                     </div>
-                                                    <div className="text-right">
-                                                        <span className="text-slate-400 text-sm block">Total :</span>
-                                                        <span className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{totalPrice} {currency}</span>
+                                                    <div className="w-full md:w-auto text-left md:text-right border-t md:border-t-0 border-slate-700/50 pt-4 md:pt-0">
+                                                        <span className="text-slate-400 text-base block mb-1">Total :</span>
+                                                        <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{totalPrice} {currency}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="mt-8 flex flex-col-reverse sm:flex-row justify-end space-y-3 space-y-reverse sm:space-y-0 sm:space-x-4">
+                                        <div className="mt-10 flex flex-col-reverse sm:flex-row justify-end space-y-4 space-y-reverse sm:space-y-0 sm:space-x-5">
                                             <button 
                                                 onClick={() => setShowSummaryModal(false)}
-                                                className="px-6 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+                                                className="px-8 py-3.5 rounded-xl border-2 border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold text-lg"
                                             >
                                                 Retour pour modifier
                                             </button>
@@ -495,7 +518,7 @@ const RegisterPage = () => {
                                                         handleSubmit();
                                                     }
                                                 }}
-                                                className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-lg shadow-blue-900/50"
+                                                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-lg transition-all shadow-lg shadow-blue-900/50 transform hover:scale-105"
                                             >
                                                 {formData.modePaiement === 'carte' ? "Passer au paiement sécurisé" : "Valider définitivement"}
                                             </button>

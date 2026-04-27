@@ -23,6 +23,17 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 Détails {formData.role.charAt(0).toUpperCase() + formData.role.slice(1)}
             </h2>
 
+            {!isMaghreb && (
+                <div className="bg-blue-900/40 border border-blue-500/30 p-4 rounded-xl mb-8 flex items-start gap-3">
+                    <div className="text-cyan-400 mt-0.5">ℹ️</div>
+                    <div className="text-sm text-blue-100">
+                        <strong className="text-white">Information Prise en charge :</strong><br/>
+                        Pour les participants Français, le tarif affiché inclut les 2 jours de formation, les repas ainsi que les pauses. Ce tarif est <strong className="text-cyan-400">éligible à une prise en charge par les organismes FIF PL et OPCO EP</strong>.
+                    </div>
+                </div>
+            )}
+
+
             {/* Durée pour Non-Exposants (Maghreb) OU Exposant Algérien */}
             {isMaghreb && (formData.role !== 'exposant' || formData.pays === 'Algérie') && (
                 <div className="space-y-6 mb-8">
@@ -119,12 +130,12 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                                             value={formData.additionalParticipants?.[idx]?.role || 'assistante'}
                                             onChange={(e) => {
                                                 const newList = [...(formData.additionalParticipants || [])];
-                                                if (!newList[idx]) newList[idx] = { 
-                                                    nom: '', 
-                                                    prenom: '', 
-                                                    role: 'assistante', 
-                                                    dureeParticipation: isMaghreb ? '2_jours' : '2_jours', 
-                                                    ticketsRepas: isMaghreb ? 0 : 2 
+                                                if (!newList[idx]) newList[idx] = {
+                                                    nom: '',
+                                                    prenom: '',
+                                                    role: 'assistante',
+                                                    dureeParticipation: isMaghreb ? '2_jours' : '2_jours',
+                                                    ticketsRepas: isMaghreb ? 0 : 2
                                                 };
                                                 newList[idx].role = e.target.value;
                                                 setFormData(prev => ({ ...prev, additionalParticipants: newList }));
@@ -242,7 +253,7 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                     />
                 </div>
             )}
-            
+
             {/* Résumé Dynamique du Prix */}
             <div className="mt-10 pt-6 border-t border-slate-700/50">
                 <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">

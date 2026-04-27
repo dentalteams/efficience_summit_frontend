@@ -6,6 +6,21 @@ const User = require('../models/User');
 const { sendRegistrationEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const rateLimit = require('express-rate-limit');
+
+// Limiteur pour la création de compte (adapté pour le Jour J : permet les inscriptions sur place depuis la même connexion Wi-Fi/iPad)
+const registerLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 100, // 100 comptes par heure max depuis la même IP (ex: le bureau d'accueil)
+    message: { message: "Trop de comptes créés à partir de cette adresse IP. Veuillez réessayer plus tard." }
+});
+
+// Limiteur pour la connexion et réinitialisation de mot de passe (ex: max 10 tentatives par IP par 15 minutes)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10,
+    message: { message: "Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes." }
+});
 
 
 const generateRegNumber = (role) => {
@@ -19,7 +34,7 @@ module.exports = { generateRegNumber };
 // @route   POST api/auth/register
 // @desc    Register a participant
 // @access  Public
-router.post('/register', async (req, res) => {
+router.post('/register', registerLimiter, async (req, res) => {
     try {
         const { email, password, role, paymentIntentId, paymentStatus } = req.body;
 
@@ -146,7 +161,7 @@ router.post('/register', async (req, res) => {
 
 // @route   POST api/auth/login
 // @desc    Authenticate user & get token
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
     const { email, password } = req.body;
     try {
         let user = await User.findOne({ email });
@@ -205,7 +220,7 @@ router.get('/me', auth, async (req, res) => {
 
 // @route   POST api/auth/forgot-password
 // @desc    Request password reset
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
     try {
         const { email } = req.body;
         const user = await User.findOne({ email });

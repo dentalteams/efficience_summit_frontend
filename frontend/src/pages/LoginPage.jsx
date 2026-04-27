@@ -30,8 +30,9 @@ const LoginPage = () => {
 
         if (result.success) {
             const from = location.state?.from?.pathname || '/dashboard';
+            const search = location.state?.from?.search || '';
             const hash = location.state?.from?.hash || '';
-            navigate(from + hash, { replace: true });
+            navigate(from + search + hash, { replace: true });
         } else {
             setError(result.error);
         }

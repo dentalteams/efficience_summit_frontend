@@ -298,7 +298,7 @@ SecToken: ${secureToken}`;
                         {/* 🆕 Détails de l'Inscription */}
                         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
                             <h3 className="text-2xl font-bold text-white mb-6">Détails de l'Inscription</h3>
-                            
+
                             <div className="space-y-4 mb-6">
                                 <div className="flex items-start justify-between p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
                                     <div className="flex items-center space-x-3">
@@ -320,7 +320,7 @@ SecToken: ${secureToken}`;
                                         </span>
                                     </div>
                                 </div>
-                                
+
                                 {user.paymentStatus !== 'paid' && (
                                     <div ref={paymentRef} id="payment" className={`p-6 border rounded-2xl flex flex-col gap-6 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
                                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -328,7 +328,7 @@ SecToken: ${secureToken}`;
                                                 <p className="font-bold text-lg mb-1">
                                                     {user.modePaiement === 'carte' ? '⚠️ Règlement requis' : 'ℹ️ Information de règlement'}
                                                 </p>
-                                                {user.modePaiement === 'carte' 
+                                                {user.modePaiement === 'carte'
                                                     ? "Votre paiement par carte n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."
                                                     : user.modePaiement === 'virement'
                                                         ? "Nous sommes en attente de votre virement bancaire. Voici nos coordonnées pour effectuer le transfert :"
@@ -336,22 +336,22 @@ SecToken: ${secureToken}`;
                                                 }
                                             </div>
                                             {user.modePaiement === 'carte' && (
-                                                <button 
+                                                <button
                                                     onClick={async () => {
                                                         try {
                                                             const res = await axios.post('/api/payment/create-checkout-session', { userId: user._id });
                                                             if (res.data?.url) {
                                                                 window.location.href = res.data.url;
                                                             } else {
-                                                                setMessage({text: 'Configuration du paiement...', type: 'error'});
+                                                                setMessage({ text: 'Configuration du paiement...', type: 'error' });
                                                             }
                                                         } catch (err) {
-                                                            setMessage({text: 'Service de paiement indisponible', type: 'error'});
+                                                            setMessage({ text: 'Service de paiement indisponible', type: 'error' });
                                                         }
                                                     }}
                                                     className="whitespace-nowrap px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-bold shadow-xl transition-all transform hover:scale-105"
                                                 >
-                                                    💳 Payer par Carte
+                                                    Payer par Carte
                                                 </button>
                                             )}
                                         </div>
@@ -363,9 +363,7 @@ SecToken: ${secureToken}`;
                                                     <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-cyan-400 text-lg text-center font-bold tracking-tighter break-all">
                                                         {user.pays === 'Tunisie' ? 'TN59 0800 2000 6410 6100 8446' : 'FR76 1009 6181 3000 0528 0620 156'}
                                                     </div>
-                                                    <p className="text-[11px] text-slate-500 italic text-center">
-                                                        Note : Précisez "SUMMIT - {user.nom} {user.prenom}" en libellé de votre virement.
-                                                    </p>
+
                                                 </div>
                                             </div>
                                         )}

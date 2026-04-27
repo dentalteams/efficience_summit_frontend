@@ -185,8 +185,8 @@ SecToken: ${secureToken}`;
 
                                         <div style="text-align: center; margin-top: 40px;">
                                             ${!isPaid ? `
-                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder à votre espace et finaliser votre paiement.</p>
-                                                <a href="${frontendUrl}/dashboard#payment" 
+                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder au paiement.</p>
+                                                <a href="${frontendUrl}/register?step=3" 
                                                    style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
                                                     Finaliser mon Paiement
                                                 </a>
@@ -214,7 +214,7 @@ SecToken: ${secureToken}`;
             await transporter.sendMail(mailOptions);
             return true;
         } else {
-            console.log('--- MODE DÉVELOPPEMENT : Email de confirmation simulé ---');
+            console.log('MODE DÉVELOPPEMENT : Email de confirmation simulé');
             console.log('Destinataire:', user.email);
             console.log('Badge Code:', user.registrationNumber);
             return true;
@@ -261,7 +261,7 @@ const sendPasswordResetEmail = async (user, resetToken) => {
             await transporter.sendMail(mailOptions);
             return true;
         } else {
-            console.log('--- MODE DÉVELOPPEMENT : Email Reset simulé ---');
+            console.log('MODE DÉVELOPPEMENT : Email Reset simulé');
             console.log('Lien de réinitialisation:', resetUrl);
             return true;
         }
