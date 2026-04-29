@@ -2,10 +2,15 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
-import { User, Calendar, Download, Mail, Check, Clock, Loader2, ArrowRight } from 'lucide-react';
+import { User, Calendar, Download, Mail, Check, Clock, Loader2, ArrowRight, CreditCard, Building, Banknote } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import axios from 'axios';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import StripePaymentForm from '../components/Register/StripePaymentForm';
+
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const DashboardPage = () => {
     const { user: authUser } = useAuth();
@@ -15,9 +20,10 @@ const DashboardPage = () => {
     const [downloading, setDownloading] = useState(false);
     const [emailing, setEmailing] = useState(false);
     const [message, setMessage] = useState({ text: '', type: '' });
-    // Fresh user data fetched directly from DB — always up to date with admin changes
     const [user, setUser] = useState(null);
     const [loadingUser, setLoadingUser] = useState(true);
+    const [showStripeForm, setShowStripeForm] = useState(false);
+    const [stripeLoading, setStripeLoading] = useState(false);
 
     useEffect(() => {
         const fetchFreshUser = async () => {
@@ -322,49 +328,61 @@ SecToken: ${secureToken}`;
                                 </div>
 
                                 {user.paymentStatus !== 'paid' && (
-                                    <div ref={paymentRef} id="payment" className={`p-6 border rounded-2xl flex flex-col gap-6 ${user.modePaiement === 'carte' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'}`}>
-                                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                            <div className={`text-sm flex-1 ${user.modePaiement === 'carte' ? 'text-red-200' : 'text-blue-200'}`}>
-                                                <p className="font-bold text-lg mb-1">
-                                                    {user.modePaiement === 'carte' ? '⚠️ Règlement requis' : 'ℹ️ Information de règlement'}
-                                                </p>
-                                                {user.modePaiement === 'carte'
-                                                    ? "Votre paiement par carte n'a pas encore été finalisé. Pour activer votre badge, veuillez procéder au règlement sécurisé."
-                                                    : user.modePaiement === 'virement'
-                                                        ? "Nous sommes en attente de votre virement bancaire. Voici nos coordonnées pour effectuer le transfert :"
-                                                        : "Vous avez opté pour un paiement sur place. Veuillez prévoir le règlement en espèces le jour de l'événement à l'accueil."
-                                                }
-                                            </div>
-                                            {user.modePaiement === 'carte' && (
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            const res = await axios.post('/api/payment/create-checkout-session', { userId: user._id });
-                                                            if (res.data?.url) {
-                                                                window.location.href = res.data.url;
-                                                            } else {
-                                                                setMessage({ text: 'Configuration du paiement...', type: 'error' });
-                                                            }
-                                                        } catch (err) {
-                                                            setMessage({ text: 'Service de paiement indisponible', type: 'error' });
-                                                        }
-                                                    }}
-                                                    className="whitespace-nowrap px-8 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-bold shadow-xl transition-all transform hover:scale-105"
-                                                >
-                                                    Payer par Carte
-                                                </button>
-                                            )}
+                                    <div ref={paymentRef} id="payment" className="p-6 border border-blue-500/20 rounded-2xl bg-blue-500/5 flex flex-col gap-6">
+                                        {/* Header résumé */}
+                                        <div>
+                                            <p className="text-white font-bold text-lg mb-1">💳 Finaliser votre règlement</p>
+                                            <p className="text-blue-200 text-sm">Montant dû : <span className="font-black text-white text-xl">{user.totalPrice} {user.currency || 'TND'}</span></p>
                                         </div>
 
+                                        {/* Virement */}
                                         {user.modePaiement === 'virement' && (
-                                            <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30 animate-fadeIn">
-                                                <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3">Coordonnées Bancaires (RIB/RIP)</p>
-                                                <div className="flex flex-col gap-3">
-                                                    <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-cyan-400 text-lg text-center font-bold tracking-tighter break-all">
-                                                        {user.pays === 'Tunisie' ? 'TN59 0800 2000 6410 6100 8446' : 'FR76 1009 6181 3000 0528 0620 156'}
-                                                    </div>
-
+                                            <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30">
+                                                <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><Building className="w-4 h-4" />Coordonnées Bancaires (RIB/RIP)</p>
+                                                <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-cyan-400 text-lg text-center font-bold tracking-tighter break-all">
+                                                    {user.pays === 'Tunisie' ? 'TN59 0800 2000 6410 6100 8446' : 'FR76 1009 6181 3000 0528 0620 156'}
                                                 </div>
+                                                <p className="text-slate-400 text-xs mt-3 italic text-center">Indiquez votre nom et prénom en référence du virement.</p>
+                                            </div>
+                                        )}
+
+                                        {/* Espèces */}
+                                        {(user.modePaiement === 'especes' || user.modePaiement === 'sur_place') && (
+                                            <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30">
+                                                <p className="text-blue-200 text-sm flex items-center gap-2"><Banknote className="w-5 h-5 text-blue-400" />Règlement en espèces prévu le jour du congrès à l'accueil.</p>
+                                            </div>
+                                        )}
+
+                                        {/* Carte Stripe */}
+                                        {user.modePaiement === 'carte' && (
+                                            <div>
+                                                {!showStripeForm ? (
+                                                    <button
+                                                        onClick={() => setShowStripeForm(true)}
+                                                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white rounded-xl font-bold shadow-xl transition-all transform hover:scale-105 flex items-center justify-center gap-2"
+                                                    >
+                                                        <CreditCard className="w-5 h-5" /> Payer {user.totalPrice} {user.currency || 'TND'} par Carte
+                                                    </button>
+                                                ) : (
+                                                    <Elements stripe={stripePromise}>
+                                                        <StripePaymentForm
+                                                            amount={user.totalPrice}
+                                                            currency={user.currency || 'TND'}
+                                                            email={user.email}
+                                                            onLoading={setStripeLoading}
+                                                            onSuccess={async (paymentIntentId) => {
+                                                                try {
+                                                                    const res = await axios.post('/api/payment/finalize', { paymentIntentId });
+                                                                    setUser(res.data.user);
+                                                                    setShowStripeForm(false);
+                                                                    setMessage({ text: '✅ Paiement validé ! Votre badge est maintenant actif.', type: 'success' });
+                                                                } catch (err) {
+                                                                    setMessage({ text: err.response?.data?.message || 'Erreur lors de la validation.', type: 'error' });
+                                                                }
+                                                            }}
+                                                        />
+                                                    </Elements>
+                                                )}
                                             </div>
                                         )}
 

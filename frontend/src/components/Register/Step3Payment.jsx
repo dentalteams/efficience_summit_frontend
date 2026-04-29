@@ -24,7 +24,7 @@ const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb,
                         {isMaghreb && formData.role !== 'exposant' && (
                             <div className="flex justify-between text-slate-300">
                                 <span>Durée</span>
-                                <span className="text-white font-medium">{formData.dureeParticipation.replace('_', ' ')}</span>
+                                <span className="text-white font-medium">{formData.dureeParticipation === '2_jours' ? '2 Jours (15 & 16 Mai)' : formData.dureeParticipation === '1_jour_15' ? '1 Jour — 15 Mai' : '1 Jour — 16 Mai'}</span>
                             </div>
                         )}
                         {isMaghreb && formData.role === 'exposant' && (
@@ -113,10 +113,10 @@ const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb,
 
                         {formData.modePaiement === 'carte' && (
                             isStripeRevealed ? (
-                                <StripePaymentForm 
-                                    amount={totalPrice} 
-                                    currency={currency} 
-                                    email={formData.email} 
+                                <StripePaymentForm
+                                    amount={totalPrice}
+                                    currency={currency}
+                                    email={formData.email}
                                     onSuccess={onStripeSuccess}
                                     onLoading={setGlobalLoading}
                                 />

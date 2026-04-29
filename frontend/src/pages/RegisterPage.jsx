@@ -5,6 +5,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
@@ -49,6 +50,7 @@ const RegisterPage = () => {
     const [isSuccess, setIsSuccess] = useState(false);
     const [showSummaryModal, setShowSummaryModal] = useState(false);
     const [isStripeRevealed, setIsStripeRevealed] = useState(false);
+    const [isReturningUser, setIsReturningUser] = useState(false);
 
     const [formData, setFormData] = useState({
         nom: '', prenom: '', email: '', telephone: '', password: '', confirmPassword: '',
@@ -68,28 +70,56 @@ const RegisterPage = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [currency, setCurrency] = useState('TND');
     const [errors, setErrors] = useState({});
+    const [priceOverride, setPriceOverride] = useState(null); // prix fixé depuis la DB pour returning user
 
     // Auto-resume step 3 if requested via URL
     useEffect(() => {
-        if (location.search.includes('step=3')) {
-            if (!authUser) {
-                // Not logged in, redirect to login then come back
-                navigate('/login', { state: { from: { pathname: '/register', search: '?step=3' } } });
-            } else {
-                // Logged in, populate data and show modal
+        if (!location.search.includes('step=3')) return;
+
+        if (!authUser) {
+            // Non connecté → login puis retour ici
+            navigate('/login', { state: { from: { pathname: '/register', search: '?step=3' } } });
+            return;
+        }
+
+        // Connecté : charger les données fraîches depuis l'API
+        const loadReturningUser = async () => {
+            try {
+                const res = await axios.get('/api/auth/me');
+                const dbUser = res.data;
                 setFormData(prev => ({
                     ...prev,
-                    ...authUser,
+                    nom: dbUser.nom || '',
+                    prenom: dbUser.prenom || '',
+                    email: dbUser.email || '',
+                    telephone: dbUser.telephone || '',
+                    ville: dbUser.ville || '',
+                    pays: dbUser.pays || 'Tunisie',
+                    role: dbUser.role || '',
+                    dureeParticipation: dbUser.dureeParticipation || '2_jours',
+                    ticketsRepas: dbUser.ticketsRepas || 0,
+                    typeStand: dbUser.typeStand || '3m',
+                    produitsExposes: dbUser.produitsExposes || '',
+                    nbParticipants: dbUser.nbParticipants || 1,
+                    additionalParticipants: dbUser.additionalParticipants || [],
+                    modePaiement: dbUser.modePaiement || 'virement',
+                    codePromo: dbUser.codePromo || '',
                     password: '',
                     confirmPassword: ''
                 }));
+                // Utiliser le prix enregistré en DB, pas le recalcul
+                setPriceOverride({ price: dbUser.totalPrice, currency: dbUser.currency || 'TND' });
+                setIsReturningUser(true);
                 setStep(3);
-                setShowSummaryModal(true);
-                // Remove step=3 from URL so it doesn't trigger again on refresh
                 navigate('/register', { replace: true });
+            } catch (err) {
+                console.error('Erreur chargement utilisateur:', err);
+                navigate('/login', { state: { from: { pathname: '/register', search: '?step=3' } } });
             }
-        }
-    }, [authUser, location.search, navigate]);
+        };
+
+        loadReturningUser();
+    }, [authUser?._id, location.search]);
 
     useEffect(() => {
         let price = 0;
@@ -99,12 +129,12 @@ const RegisterPage = () => {
         if (isMaghreb) {
             if (formData.pays === 'Algérie') {
                 curr = '€';
-                
+
                 if (formData.role === 'etudiant') {
                     price = formData.dureeParticipation === '2_jours' ? 30 : 15;
                 } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
                     // For Algeria with association? The user didn't specify. We fallback to normal praticien price if needed, or 200.
-                    price = formData.dureeParticipation === '2_jours' ? 200 : 150; 
+                    price = formData.dureeParticipation === '2_jours' ? 200 : 150;
                 } else if (formData.role === 'praticien') {
                     price = formData.dureeParticipation === '2_jours' ? 200 : 150;
                 } else if (formData.role === 'assistante') {
@@ -229,9 +259,13 @@ const RegisterPage = () => {
         setTotalPrice(price);
     }, [formData]);
 
+    // Pour un returning user, on utilise le prix enregistré en DB
+    const effectiveTotalPrice = priceOverride ? priceOverride.price : totalPrice;
+    const effectiveCurrency = priceOverride ? priceOverride.currency : currency;
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
+
         if (name === 'pays') {
             const isTargetMaghreb = ['Tunisie', 'Algérie', 'Maroc'].includes(value);
             if (!isTargetMaghreb) {
@@ -253,7 +287,7 @@ const RegisterPage = () => {
         } else {
             setFormData(prev => ({ ...prev, [name]: value }));
         }
-        
+
         if (errors[name]) setErrors(prev => ({ ...prev, [name]: null }));
     };
 
@@ -282,7 +316,7 @@ const RegisterPage = () => {
     const validateStep2 = () => {
         let tempErrors = { ...errors };
         let isValid = true;
-        
+
         if (formData.nbParticipants > 1) {
             const addParticipants = formData.additionalParticipants || [];
             const maxAdditional = parseInt(formData.nbParticipants) - 1;
@@ -327,12 +361,27 @@ const RegisterPage = () => {
     const handleSubmit = async (stripePaymentId = null) => {
         setLoading(true);
         try {
+            // --- Utilisateur déjà inscrit : finaliser le paiement uniquement ---
+            if (isReturningUser) {
+                if (stripePaymentId) {
+                    // Valider le paiement Stripe côté serveur
+                    await axios.post('/api/payment/finalize', { paymentIntentId: stripePaymentId });
+                } else {
+                    // Mettre à jour le mode de paiement (virement / espèces)
+                    await axios.put('/api/auth/update-payment-mode', { modePaiement: formData.modePaiement });
+                }
+                setIsSuccess(true);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+            }
+
+            // --- Nouvelle inscription ---
             const finalPays = formData.pays === 'Autre' ? formData.customPays || 'Autre' : formData.pays;
             const registrationData = {
                 ...formData,
                 pays: finalPays,
-                totalPrice,
-                currency,
+                totalPrice: effectiveTotalPrice,
+                currency: effectiveCurrency,
                 paymentIntentId: stripePaymentId || formData.paymentIntentId,
                 paymentStatus: (stripePaymentId || formData.paymentIntentId) ? 'paid' : 'pending'
             };
@@ -346,7 +395,7 @@ const RegisterPage = () => {
             }
         } catch (error) {
             console.error(error);
-            alert("Une erreur est survenue lors de l'inscription.");
+            alert(error.response?.data?.message || "Une erreur est survenue.");
         } finally {
             setLoading(false);
         }
@@ -369,6 +418,16 @@ const RegisterPage = () => {
                     </div>
 
                     <StepIndicator currentStep={step} totalSteps={3} />
+
+                    {isReturningUser && step === 3 && (
+                        <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 rounded-2xl flex items-center gap-3">
+                            <span className="text-2xl">👋</span>
+                            <div>
+                                <p className="text-white font-semibold text-sm">Bienvenue {formData.prenom} {formData.nom}</p>
+                                <p className="text-blue-300 text-xs">Vous êtes déjà inscrit(e). Choisissez ou confirmez votre mode de paiement pour finaliser votre inscription.</p>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="bg-slate-900/80 backdrop-blur-xl rounded-3xl border border-slate-800 shadow-2xl overflow-hidden p-8 md:p-12">
                         {isSuccess ? (
@@ -403,14 +462,14 @@ const RegisterPage = () => {
                             <>
                                 <form onSubmit={(e) => e.preventDefault()}>
                                     {step === 1 && <Step1General formData={formData} handleChange={handleChange} setFormData={setFormData} errors={errors} setErrors={setErrors} />}
-                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} totalPrice={totalPrice} currency={currency} errors={errors} />}
+                                    {step === 2 && <Step2Details formData={formData} handleChange={handleChange} setFormData={setFormData} isMaghreb={isMaghreb} totalPrice={effectiveTotalPrice} currency={effectiveCurrency} errors={errors} />}
                                     {step === 3 && (
                                         <Step3Payment
                                             formData={formData}
                                             handleChange={handleChange}
                                             setFormData={setFormData}
-                                            totalPrice={totalPrice}
-                                            currency={currency}
+                                            totalPrice={effectiveTotalPrice}
+                                            currency={effectiveCurrency}
                                             isMaghreb={isMaghreb}
                                             onStripeSuccess={handleStripeSuccess}
                                             setGlobalLoading={setLoading}
@@ -420,7 +479,7 @@ const RegisterPage = () => {
                                 </form>
 
                                 <div className="flex justify-between mt-12 pt-6 border-t border-slate-800/50">
-                                    {step > 1 ? (
+                                    {step > 1 && !isReturningUser ? (
                                         <button onClick={handlePrev} className="px-8 py-3 rounded-xl flex items-center text-slate-400 hover:text-white hover:bg-slate-800 transition-all font-medium">
                                             <ChevronLeft className="mr-2 w-5 h-5" /> {t('register.prev')}
                                         </button>
@@ -447,7 +506,7 @@ const RegisterPage = () => {
                                         <h3 className="text-3xl md:text-4xl font-black text-white mb-8 border-b border-slate-800 pb-5">
                                             Récapitulatif de votre inscription
                                         </h3>
-                                        
+
                                         <div className="space-y-8">
                                             {/* Informations Générales */}
                                             <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
@@ -457,7 +516,7 @@ const RegisterPage = () => {
                                                     <div><span className="text-slate-400">Email :</span> <span className="text-white font-medium">{formData.email}</span></div>
                                                     <div><span className="text-slate-400">Téléphone :</span> <span className="text-white font-medium">{formData.telephone}</span></div>
                                                     <div>
-                                                        <span className="text-slate-400">Rôle :</span> 
+                                                        <span className="text-slate-400">Rôle :</span>
                                                         <span className="text-white font-medium capitalize"> {formData.role === 'praticien' ? 'Chirurgien-dentiste' : formData.role}</span>
                                                     </div>
                                                 </div>
@@ -471,7 +530,7 @@ const RegisterPage = () => {
                                                     <div><span className="text-slate-400">Participants :</span> <span className="text-white font-medium">{formData.nbParticipants || 1}</span></div>
                                                     <div><span className="text-slate-400">Total Tickets Repas :</span> <span className="text-white font-medium">{(parseInt(formData.ticketsRepas) || 0) + formData.additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0)}</span></div>
                                                 </div>
-                                                
+
                                                 {formData.additionalParticipants.length > 0 && (
                                                     <div className="mt-5 pt-5 border-t border-slate-700/50">
                                                         <span className="text-slate-400 text-base mb-3 block">Accompagnants :</span>
@@ -496,20 +555,20 @@ const RegisterPage = () => {
                                                     </div>
                                                     <div className="w-full md:w-auto text-left md:text-right border-t md:border-t-0 border-slate-700/50 pt-4 md:pt-0">
                                                         <span className="text-slate-400 text-base block mb-1">Total :</span>
-                                                        <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{totalPrice} {currency}</span>
+                                                        <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">{effectiveTotalPrice} {effectiveCurrency}</span>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
                                         <div className="mt-10 flex flex-col-reverse sm:flex-row justify-end space-y-4 space-y-reverse sm:space-y-0 sm:space-x-5">
-                                            <button 
+                                            <button
                                                 onClick={() => setShowSummaryModal(false)}
                                                 className="px-8 py-3.5 rounded-xl border-2 border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold text-lg"
                                             >
                                                 Retour pour modifier
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={() => {
                                                     setShowSummaryModal(false);
                                                     if (formData.modePaiement === 'carte') {

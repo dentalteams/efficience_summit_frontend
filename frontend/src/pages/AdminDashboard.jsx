@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import {
     Users, CreditCard, PieChart, Trash2, Edit3, Search,
     Download, Check, X, Loader2, Plus,
@@ -24,6 +26,10 @@ const AdminDashboard = () => {
     const [formData, setFormData] = useState({
         nom: '', prenom: '', email: '', telephone: '',
         ville: '', pays: 'Tunisie', role: 'praticien',
+        dureeParticipation: '2_jours', ticketsRepas: 0,
+        typeStand: '3m', produitsExposes: '',
+        nbParticipants: 1, additionalParticipants: [],
+        association: '',
         totalPrice: 0, currency: 'TND', paymentStatus: 'pending',
         modePaiement: 'especes'
     });
@@ -49,6 +55,72 @@ const AdminDashboard = () => {
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Calcul automatique du prix pour le formulaire admin
+    useEffect(() => {
+        if (editingUser) return; // Ne pas recalculer si on édite un user existant
+        const isMaghreb = ['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays);
+        let price = 0;
+        let curr = 'TND';
+
+        if (isMaghreb) {
+            if (formData.pays === 'Algérie') {
+                curr = '€';
+                if (formData.role === 'etudiant') price = formData.dureeParticipation === '2_jours' ? 30 : 15;
+                else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) price = formData.dureeParticipation === '2_jours' ? 200 : 150;
+                else if (formData.role === 'praticien') price = formData.dureeParticipation === '2_jours' ? 200 : 150;
+                else if (formData.role === 'assistante') price = formData.dureeParticipation === '2_jours' ? 90 : 60;
+                else if (formData.role === 'exposant') price = formData.typeStand === '8m' ? 2500 : 1500;
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    (formData.additionalParticipants || []).slice(0, formData.nbParticipants - 1).forEach(p => {
+                        const r = p?.role || 'assistante'; const d = p?.dureeParticipation || '2_jours';
+                        if (r === 'etudiant') price += d === '2_jours' ? 30 : 15;
+                        else if (r === 'praticien') price += d === '2_jours' ? 200 : 150;
+                        else price += d === '2_jours' ? 90 : 60;
+                        // tickets repas accompagnant (27€ Algérie)
+                        price += (parseInt(p?.ticketsRepas) || 0) * 27;
+                    });
+                }
+                // tickets repas principal
+                price += (parseInt(formData.ticketsRepas) || 0) * 27;
+            } else {
+                curr = 'TND';
+                if (formData.role === 'etudiant') price = formData.dureeParticipation === '2_jours' ? 100 : 50;
+                else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) price = 500;
+                else if (formData.role === 'praticien') price = formData.dureeParticipation === '2_jours' ? 700 : 500;
+                else if (formData.role === 'assistante') price = formData.dureeParticipation === '2_jours' ? 300 : 200;
+                else if (formData.role === 'exposant') price = formData.typeStand === '8m' ? 2500 : 1500;
+                if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
+                    (formData.additionalParticipants || []).slice(0, formData.nbParticipants - 1).forEach(p => {
+                        const r = p?.role || 'assistante'; const d = p?.dureeParticipation || '2_jours';
+                        if (r === 'etudiant') price += d === '2_jours' ? 100 : 50;
+                        else if (r === 'praticien') price += d === '2_jours' ? 700 : 500;
+                        else price += d === '2_jours' ? 300 : 200;
+                        // tickets repas accompagnant (90 TND Tunisie/Maroc)
+                        price += (parseInt(p?.ticketsRepas) || 0) * 90;
+                    });
+                }
+                // tickets repas principal
+                price += (parseInt(formData.ticketsRepas) || 0) * 90;
+            }
+        } else {
+            // Europe — repas inclus pour 2 jours, 2 tickets par participant sans surcoût
+            curr = '€';
+            const nbTotal = parseInt(formData.nbParticipants) || 1;
+            price = formData.role === 'assistante' ? 300 : 500;
+            if (nbTotal > 1) {
+                (formData.additionalParticipants || []).slice(0, nbTotal - 1).forEach(p => {
+                    price += (p?.role === 'assistante' ? 300 : 500);
+                });
+            }
+            // Tickets repas inclus : 2 par participant (2 jours)
+            const ticketsEurope = nbTotal * 2;
+            const additionalWithRepas = (formData.additionalParticipants || []).map(p => ({ ...p, ticketsRepas: 2 }));
+            setFormData(prev => ({ ...prev, totalPrice: price, currency: curr, ticketsRepas: 2, additionalParticipants: additionalWithRepas }));
+            return;
+        }
+        setFormData(prev => ({ ...prev, totalPrice: price, currency: curr }));
+    }, [formData.role, formData.pays, formData.dureeParticipation, formData.typeStand, formData.ticketsRepas, formData.nbParticipants, formData.additionalParticipants, formData.association, editingUser]);
 
 
     useEffect(() => {
@@ -82,6 +154,10 @@ const AdminDashboard = () => {
             setFormData({
                 nom: '', prenom: '', email: '', telephone: '',
                 ville: '', pays: 'Tunisie', role: 'praticien',
+                dureeParticipation: '2_jours', ticketsRepas: 0,
+                typeStand: '3m', produitsExposes: '',
+                nbParticipants: 1, additionalParticipants: [],
+                association: '',
                 totalPrice: 0, currency: 'TND', paymentStatus: 'pending',
                 modePaiement: 'especes'
             });
@@ -156,17 +232,63 @@ const AdminDashboard = () => {
         return matchesSearch && matchesRole;
     });
 
+    const buildRows = (users) => {
+        const headers = [
+            'N° Inscription', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Ville', 'Pays',
+            'Rôle', 'Durée', 'Tickets Repas (perso)', 'Tickets Repas (total groupe)',
+            'Nb Accompagnants', 'Prix Total', 'Devise', 'Statut Paiement', 'Mode Paiement',
+            'Association', 'Type Stand', 'Date Inscription',
+            'Acc.1 Prénom', 'Acc.1 Nom', 'Acc.1 Rôle', 'Acc.1 Durée', 'Acc.1 Repas',
+            'Acc.2 Prénom', 'Acc.2 Nom', 'Acc.2 Rôle', 'Acc.2 Durée', 'Acc.2 Repas',
+            'Acc.3 Prénom', 'Acc.3 Nom', 'Acc.3 Rôle', 'Acc.3 Durée', 'Acc.3 Repas',
+            'Acc.4 Prénom', 'Acc.4 Nom', 'Acc.4 Rôle', 'Acc.4 Durée', 'Acc.4 Repas',
+            'Acc.5 Prénom', 'Acc.5 Nom', 'Acc.5 Rôle', 'Acc.5 Durée', 'Acc.5 Repas',
+        ];
+
+        const formatDuree = (d) => {
+            if (d === '2_jours') return '2 Jours (15 & 16 Mai)';
+            if (d === '1_jour_15') return '1 Jour — 15 Mai';
+            if (d === '1_jour_16') return '1 Jour — 16 Mai';
+            return d || '2 Jours';
+        };
+
+        const rows = users.map(u => {
+            const aps = u.additionalParticipants || [];
+            const totalTickets = (parseInt(u.ticketsRepas) || 0) + aps.reduce((s, p) => s + (parseInt(p.ticketsRepas) || 0), 0);
+            const dateInscription = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '';
+
+            const base = [
+                u.registrationNumber || '',
+                u.nom || '', u.prenom || '', u.email || '', u.telephone || '',
+                u.ville || '', u.pays || '',
+                u.role || '', formatDuree(u.dureeParticipation),
+                parseInt(u.ticketsRepas) || 0, totalTickets,
+                aps.length,
+                u.totalPrice || 0, u.currency || 'TND',
+                u.paymentStatus || '', u.modePaiement || '',
+                u.association || '', u.role === 'exposant' ? (u.typeStand || '') : '',
+                dateInscription,
+            ];
+
+            // 5 accompagnants max en colonnes
+            for (let i = 0; i < 5; i++) {
+                const ap = aps[i];
+                if (ap) {
+                    base.push(ap.prenom || '', ap.nom || '', ap.role || '', formatDuree(ap.dureeParticipation), parseInt(ap.ticketsRepas) || 0);
+                } else {
+                    base.push('', '', '', '', '');
+                }
+            }
+            return base;
+        });
+
+        return { headers, rows };
+    };
+
     const exportToExcel = () => {
-        const headers = ['Nom', 'Prénom', 'Email', 'Téléphone', 'Ville', 'Pays', 'Rôle', 'Prix Facturé', 'Statut Paiement', 'Mode Paiement', 'Numéro de Billet'];
-        const rows = filteredUsers.map(u => [
-            u.nom, u.prenom, u.email, u.telephone, u.ville, u.pays, u.role, u.totalPrice, u.paymentStatus, u.modePaiement, u.registrationNumber
-        ]);
-
-
+        const { headers, rows } = buildRows(filteredUsers);
         const BOM = "\uFEFF";
-        const csvContent = BOM + headers.join(";") + "\n"
-            + rows.map(e => e.join(";")).join("\n");
-
+        const csvContent = BOM + headers.join(";") + "\n" + rows.map(r => r.join(";")).join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
@@ -179,14 +301,8 @@ const AdminDashboard = () => {
 
     const copyToSheets = async () => {
         try {
-            const headers = ['Nom', 'Prénom', 'Email', 'Téléphone', 'Ville', 'Pays', 'Rôle', 'Prix', 'Statut', 'Mode', 'Numéro'];
-            const rows = filteredUsers.map(u => [
-                u.nom, u.prenom, u.email, u.telephone, u.ville, u.pays, u.role, u.totalPrice, u.paymentStatus, u.modePaiement, u.registrationNumber
-            ]);
-
-            // TSV format (Tab Separated) is the magic format for pasting into Google Sheets/Excel
+            const { headers, rows } = buildRows(filteredUsers);
             const tsvContent = headers.join("\t") + "\n" + rows.map(r => r.join("\t")).join("\n");
-
             await navigator.clipboard.writeText(tsvContent);
             alert("🪄 Données copiées ! Allez sur Google Sheets et faites CTRL + V.");
         } catch (err) {
@@ -434,6 +550,8 @@ const AdminDashboard = () => {
                         </div>
                     )}
 
+
+
                     {activeTab === 'nouvelle' && (
                         <div className="animate-in slide-in-from-bottom-4 duration-500">
                             <div className="flex justify-between items-center mb-10">
@@ -441,94 +559,247 @@ const AdminDashboard = () => {
                                     <h1 className="text-3xl lg:text-4xl font-black text-[var(--text-main)] transition-colors tracking-tight">Nouvelle Inscription</h1>
                                     <p className="text-slate-400 mt-2">Enregistrement manuel d'un nouveau participant au Summit.</p>
                                 </div>
-                                <button
-                                    onClick={() => setActiveTab('inscriptions')}
-                                    className="bg-[#1E293B] hover:bg-[#2A3B52] text-white px-6 py-3.5 rounded-xl border border-white/5 transition-all font-bold flex items-center space-x-2"
-                                >
+                                <button onClick={() => setActiveTab('inscriptions')} className="bg-[#1E293B] hover:bg-[#2A3B52] text-white px-6 py-3.5 rounded-xl border border-white/5 transition-all font-bold">
                                     <X size={20} />
                                 </button>
                             </div>
 
                             <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[32px] overflow-hidden shadow-2xl">
-                                <form onSubmit={handleSubmit} className="p-8 lg:p-12">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Prénom du participant</label>
-                                            <input name="prenom" value={formData.prenom} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all text-lg" required />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Nom du participant</label>
-                                            <input name="nom" value={formData.nom} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all text-lg" required />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Adresse Email</label>
-                                            <input name="email" type="email" value={formData.email} onChange={handleInputChange} placeholder="exemple@mail.com" className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all" required />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Numéro de Téléphone</label>
-                                            <input name="telephone" value={formData.telephone} onChange={handleInputChange} placeholder="+216 -- --- ---" className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all" />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Ville</label>
-                                            <input name="ville" value={formData.ville} onChange={handleInputChange} placeholder="Ex: Monastir, Tunis..." className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all" required />
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Pays</label>
-                                            <input name="pays" value={formData.pays} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 focus:bg-[var(--bg-card)] outline-none transition-all" required />
-                                        </div>
+                                <form onSubmit={handleSubmit} className="p-8 lg:p-12 space-y-10">
 
-                                        <div className="md:col-span-2 my-4">
-                                            <div className="h-[1px] bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent"></div>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Catégorie / Rôle</label>
-                                            <select name="role" value={formData.role} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-5 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
-                                                <option value="praticien">Praticien</option>
-                                                <option value="assistante">Assistante</option>
-                                                <option value="exposant">Exposant</option>
-                                                <option value="etudiant">Étudiant</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Méthode de Paiement</label>
-                                            <select name="modePaiement" value={formData.modePaiement} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-5 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
-                                                <option value="especes">En Espèces</option>
-                                                <option value="virement">Virement Bancaire</option>
-                                                <option value="carte">Carte en ligne</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Tarif Appliqué</label>
-                                            <div className="relative">
-                                                <input name="totalPrice" type="number" value={formData.totalPrice} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-5 text-blue-400 outline-none font-black text-2xl focus:border-blue-500/50" />
-                                                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center space-x-2">
-                                                    <select name="currency" value={formData.currency} onChange={handleInputChange} className="bg-transparent text-[var(--text-muted)] font-bold outline-none cursor-pointer">
-                                                        <option value="TND" className="bg-[var(--bg-card)]">TND</option>
-                                                        <option value="€" className="bg-[var(--bg-card)]">EUR</option>
-                                                    </select>
-                                                </div>
+                                    {/* Identité */}
+                                    <div>
+                                        <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Informations personnelles</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Prénom</label>
+                                                <input name="prenom" value={formData.prenom} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all text-lg" required />
                                             </div>
-                                        </div>
-                                        <div className="space-y-3">
-                                            <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Statut Initial du Paiement</label>
-                                            <select name="paymentStatus" value={formData.paymentStatus} onChange={handleInputChange} className={`w-full border rounded-2xl px-6 py-5 outline-none font-black appearance-none cursor-pointer transition-all ${formData.paymentStatus === 'paid' ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-amber-500/10 text-amber-500 border-amber-500/30'}`}>
-                                                <option value="pending" className="bg-[var(--bg-card)]">En attente (Non payé)</option>
-                                                <option value="paid" className="bg-[var(--bg-card)]">Déjà Payé / Confirmé</option>
-                                            </select>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Nom</label>
+                                                <input name="nom" value={formData.nom} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all text-lg" required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Email</label>
+                                                <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all" required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Téléphone</label>
+                                                <PhoneInput
+                                                    country={'tn'}
+                                                    value={formData.telephone}
+                                                    onChange={(phone) => setFormData(prev => ({ ...prev, telephone: phone }))}
+                                                    containerClass="!w-full"
+                                                    inputClass="!w-full !h-[52px] !bg-[var(--bg-input)] !text-[var(--text-main)] !rounded-2xl !pl-14 !text-base !border-[var(--border-subtle)] focus:!border-blue-500 !transition-all"
+                                                    buttonClass="!h-[52px] !bg-[var(--bg-input)] !rounded-l-2xl hover:!bg-[var(--bg-card)] !border-[var(--border-subtle)]"
+                                                    dropdownClass="!bg-slate-900 !text-white !border-slate-700"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Ville</label>
+                                                <input name="ville" value={formData.ville} onChange={handleInputChange} placeholder="Ex: Monastir, Tunis..." className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all" required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Pays</label>
+                                                <select name="pays" value={['Tunisie', 'Algérie', 'Maroc', 'France', 'Belgique', 'Suisse'].includes(formData.pays) ? formData.pays : 'Autre'} onChange={e => {
+                                                    if (e.target.value === 'Autre') setFormData(prev => ({ ...prev, pays: '' }));
+                                                    else setFormData(prev => ({ ...prev, pays: e.target.value }));
+                                                }} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                    <option value="Tunisie">Tunisie</option>
+                                                    <option value="Algérie">Algérie</option>
+                                                    <option value="Maroc">Maroc</option>
+                                                    <option value="France">France</option>
+                                                    <option value="Belgique">Belgique</option>
+                                                    <option value="Suisse">Suisse</option>
+                                                    <option value="Autre">Autre</option>
+                                                </select>
+                                                {!['Tunisie', 'Algérie', 'Maroc', 'France', 'Belgique', 'Suisse'].includes(formData.pays) && (
+                                                    <input
+                                                        value={formData.pays}
+                                                        onChange={e => setFormData(prev => ({ ...prev, pays: e.target.value }))}
+                                                        placeholder="Précisez le pays..."
+                                                        className="w-full bg-[var(--bg-input)] border border-blue-500/50 rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all mt-2"
+                                                        required
+                                                    />
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="mt-12 flex flex-col md:flex-row gap-4">
+                                    <div className="h-[1px] bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent" />
+
+                                    {/* Participation */}
+                                    <div>
+                                        <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Détails de participation</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Catégorie / Rôle</label>
+                                                <select name="role" value={formData.role} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                    <option value="praticien">Chirurgien-dentiste</option>
+                                                    <option value="assistante">Assistante</option>
+                                                    <option value="exposant">Exposant</option>
+                                                    <option value="etudiant">Étudiant</option>
+                                                </select>
+                                            </div>
+
+                                            {formData.role !== 'exposant' && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Durée de participation</label>
+                                                    <select name="dureeParticipation" value={formData.dureeParticipation} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                        <option value="2_jours">2 Jours (15 & 16 Mai)</option>
+                                                        <option value="1_jour_15">1 Jour — 15 Mai</option>
+                                                        <option value="1_jour_16">1 Jour — 16 Mai</option>
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {formData.role === 'exposant' && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Type de Stand</label>
+                                                    <select name="typeStand" value={formData.typeStand} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                        <option value="3m">Stand 3m²</option>
+                                                        <option value="8m">Stand 8m²</option>
+                                                    </select>
+                                                </div>
+                                            )}
+
+                                            {['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays) ? (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">
+                                                        Tickets Repas <span className="text-blue-400 normal-case font-normal">({formData.pays === 'Algérie' ? '27 €' : '90 TND'} / ticket)</span>
+                                                    </label>
+                                                    <input name="ticketsRepas" type="number" min="0" max="10" value={formData.ticketsRepas} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all" />
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Repas</label>
+                                                    <div className="px-6 py-4 bg-green-500/10 border border-green-500/20 rounded-2xl text-green-400 text-sm font-semibold">
+                                                        ✅ Repas inclus (2 jours) — pas de surcoût
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {formData.role !== 'exposant' && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Nombre total de participants</label>
+                                                    <input name="nbParticipants" type="number" min="1" max="10" value={formData.nbParticipants} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] focus:border-blue-500 outline-none transition-all" />
+                                                </div>
+                                            )}
+
+                                            {(formData.role === 'praticien' || formData.role === 'assistante') && ['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays) && (
+                                                <div className="space-y-2">
+                                                    <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Association partenaire</label>
+                                                    <select name="association" value={formData.association || ''} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                        <option value="">Aucune</option>
+                                                        <option value="Tunisian acadmi">Tunisian Academy</option>
+                                                        <option value="ADPC">ADPC</option>
+                                                        <option value="STMOLP">STMOLP</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Accompagnants */}
+                                        {formData.role !== 'exposant' && parseInt(formData.nbParticipants) > 1 && (
+                                            <div className="mt-6 space-y-4">
+                                                <p className="text-[11px] font-black text-purple-400 uppercase tracking-[0.2em]">Accompagnants ({parseInt(formData.nbParticipants) - 1})</p>
+                                                {Array.from({ length: parseInt(formData.nbParticipants) - 1 }).map((_, i) => {
+                                                    const ap = formData.additionalParticipants?.[i] || {};
+                                                    const updateAp = (field, val) => {
+                                                        const updated = [...(formData.additionalParticipants || [])];
+                                                        updated[i] = { ...updated[i], [field]: val };
+                                                        setFormData(prev => ({ ...prev, additionalParticipants: updated }));
+                                                    };
+                                                    return (
+                                                        <div key={i} className="p-5 bg-[var(--bg-input)] rounded-2xl border border-purple-500/20 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                            <div>
+                                                                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">Prénom</label>
+                                                                <input value={ap.prenom || ''} onChange={e => updateAp('prenom', e.target.value)} className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-main)] outline-none focus:border-purple-500 text-sm" required />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">Nom</label>
+                                                                <input value={ap.nom || ''} onChange={e => updateAp('nom', e.target.value)} className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-main)] outline-none focus:border-purple-500 text-sm" required />
+                                                            </div>
+                                                            <div>
+                                                                <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">Rôle</label>
+                                                                <select value={ap.role || 'assistante'} onChange={e => updateAp('role', e.target.value)} className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-main)] outline-none text-sm appearance-none">
+                                                                    <option value="praticien">Praticien</option>
+                                                                    <option value="assistante">Assistante</option>
+                                                                    <option value="etudiant">Étudiant</option>
+                                                                </select>
+                                                            </div>
+                                                            {['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays) && (
+                                                                <div>
+                                                                    <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">Durée</label>
+                                                                    <select value={ap.dureeParticipation || '2_jours'} onChange={e => updateAp('dureeParticipation', e.target.value)} className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-main)] outline-none text-sm appearance-none">
+                                                                        <option value="2_jours">2 Jours</option>
+                                                                        <option value="1_jour_15">15 Mai</option>
+                                                                        <option value="1_jour_16">16 Mai</option>
+                                                                    </select>
+                                                                </div>
+                                                            )}
+                                                            {['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays) ? (
+                                                                <div>
+                                                                    <label className="text-[10px] text-[var(--text-muted)] uppercase font-bold block mb-1">
+                                                                        Tickets repas ({formData.pays === 'Algérie' ? '27€' : '90 TND'})
+                                                                    </label>
+                                                                    <input type="number" min="0" max="5" value={ap.ticketsRepas || 0} onChange={e => updateAp('ticketsRepas', e.target.value)} className="w-full bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-xl px-4 py-2.5 text-[var(--text-main)] outline-none focus:border-purple-500 text-sm" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-end pb-1">
+                                                                    <span className="text-green-400 text-xs font-semibold">✅ Repas inclus</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="h-[1px] bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent" />
+
+                                    {/* Paiement */}
+                                    <div>
+                                        <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Paiement</p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Méthode de Paiement</label>
+                                                <select name="modePaiement" value={formData.modePaiement} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-4 text-[var(--text-main)] outline-none font-bold appearance-none cursor-pointer hover:border-white/20 transition-colors">
+                                                    <option value="especes">En Espèces</option>
+                                                    <option value="virement">Virement Bancaire</option>
+                                                    <option value="carte">Carte en ligne</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Statut du Paiement</label>
+                                                <select name="paymentStatus" value={formData.paymentStatus} onChange={handleInputChange} className={`w-full border rounded-2xl px-6 py-4 outline-none font-black appearance-none cursor-pointer transition-all ${formData.paymentStatus === 'paid' ? 'bg-green-500/10 text-green-400 border-green-500/30' : 'bg-amber-500/10 text-amber-500 border-amber-500/30'}`}>
+                                                    <option value="pending" className="bg-[var(--bg-card)]">En attente (Non payé)</option>
+                                                    <option value="paid" className="bg-[var(--bg-card)]">Déjà Payé / Confirmé</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2 md:col-span-2">
+                                                <label className="text-[12px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">Tarif Appliqué</label>
+                                                <div className="relative">
+                                                    <input name="totalPrice" type="number" value={formData.totalPrice} onChange={handleInputChange} className="w-full bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-2xl px-6 py-5 text-blue-400 outline-none font-black text-2xl focus:border-blue-500/50" />
+                                                    <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                                                        <select name="currency" value={formData.currency} onChange={handleInputChange} className="bg-transparent text-[var(--text-muted)] font-bold outline-none cursor-pointer">
+                                                            <option value="TND" className="bg-[var(--bg-card)]">TND</option>
+                                                            <option value="€" className="bg-[var(--bg-card)]">EUR</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <p className="text-xs text-[var(--text-muted)] ml-1">Calculé automatiquement selon le rôle et le pays. Modifiable manuellement.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row gap-4 pt-2">
                                         <button type="submit" className="flex-1 lg:flex-none lg:px-12 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-xl shadow-[0_15px_30px_rgba(37,99,235,0.2)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center space-x-2 border border-blue-400/20">
                                             <Check size={20} />
                                             <span>Valider l'Inscription</span>
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveTab('inscriptions')}
-                                            className="px-10 py-5 bg-[var(--bg-sidebar)] hover:bg-slate-200 dark:hover:bg-slate-800 text-[var(--text-main)] font-bold rounded-2xl border border-[var(--border-subtle)] transition-all"
-                                        >
+                                        <button type="button" onClick={() => setActiveTab('inscriptions')} className="px-10 py-4 bg-[var(--bg-sidebar)] hover:bg-slate-200 dark:hover:bg-slate-800 text-[var(--text-main)] font-bold rounded-2xl border border-[var(--border-subtle)] transition-all">
                                             Annuler
                                         </button>
                                     </div>
@@ -536,7 +807,6 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                     )}
-
 
                     {activeTab === 'inscriptions' && (
                         <div className="animate-in fade-in duration-500">
