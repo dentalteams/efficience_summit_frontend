@@ -107,6 +107,7 @@ const ProgramPage = () => {
                 { time: "11h00 - 12h30", title: t('program.d1_s3_title'), description: t('program.d1_s3_desc'), type: "Conférence", icon: "Zap" },
                 { time: "12h30 - 14h30", title: t('program.d1_s4_title'), description: t('program.d1_s4_desc'), type: "Repas", icon: "Utensils" },
                 { time: "14h30 - 16h00", title: t('program.d1_s5_title'), description: t('program.d1_s5_desc'), type: "Conférence", icon: "Monitor" },
+                { time: "14h30 - 16h00", title: t('program.d2_s5_title'), description: t('program.d2_s5_desc'), type: "Challenge", icon: "Trophy", parallel: true },
                 { time: "16h00 - 16h30", title: t('program.d1_s6_title'), description: t('program.d1_s6_desc'), type: "Pause", icon: "Coffee" },
                 { time: "16h30 - 18h00", title: t('program.d1_s7_title'), description: t('program.d1_s7_desc'), type: "Conférence", icon: "ShieldCheck" }
             ]
@@ -120,7 +121,6 @@ const ProgramPage = () => {
                 { time: "10h30 - 11h00", title: t('program.d2_s2_title'), description: t('program.d2_s2_desc'), type: "Pause", icon: "Coffee" },
                 { time: "11h00 - 12h30", title: t('program.d2_s3_title'), description: t('program.d2_s3_desc'), type: "Conférence", icon: "Zap" },
                 { time: "14h30 - 16h00", title: t('program.d2_s4_title'), description: t('program.d2_s4_desc'), type: "Conférence", icon: "Users" },
-                { title: t('program.d2_s5_title'), description: t('program.d2_s5_desc'), type: "Challenge", icon: "Trophy" },
                 { time: "16h00 - 16h30", title: t('program.d2_s6_title'), description: t('program.d2_s6_desc'), type: "Repas", icon: "Utensils" },
                 { time: "16h30 - 17h00", title: t('program.d2_s7_title'), description: t('program.d2_s7_desc'), type: "Cérémonie", icon: "Award" }
             ]
@@ -131,7 +131,7 @@ const ProgramPage = () => {
 
     return (
         <div className="min-h-screen bg-black pb-20 px-4 relative overflow-hidden">
-            
+
             {isAuthenticated && (
                 <div className="fixed top-24 left-4 md:left-8 z-50 animate-fade-in-up">
                     <button
@@ -148,13 +148,16 @@ const ProgramPage = () => {
 
             <div className="absolute top-0 left-0 w-full h-[450px] md:h-[750px] overflow-hidden">
                 <iframe
-                    src="https://www.youtube.com/embed/YbNEvwUEpXI?autoplay=1&mute=1&loop=1&playlist=YbNEvwUEpXI&controls=0&showinfo=0&rel=0&vq=hd1080"
+                    src="https://www.youtube.com/embed/YbNEvwUEpXI?autoplay=1&mute=1&loop=1&playlist=YbNEvwUEpXI&controls=0&showinfo=0&rel=0&vq=hd1080&modestbranding=1&iv_load_policy=3&disablekb=1"
                     className="w-full h-full object-cover scale-150 md:scale-125 opacity-90"
                     style={{ pointerEvents: 'none' }}
                     frameBorder="0"
                     allow="autoplay; encrypted-media"
                     allowFullScreen
                 ></iframe>
+
+                {/* Overlay pour bloquer les contrôles YouTube sur mobile */}
+                <div className="absolute inset-0" style={{ pointerEvents: 'all' }}></div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
                 <div className="absolute inset-0 bg-black/20"></div>
@@ -232,9 +235,62 @@ const ProgramPage = () => {
                 </div>
 
                 <div className="space-y-4">
-                    {currentDay.schedule.map((item, index) => (
-                        <ProgramCard key={`${activeDay}-${index}`} item={item} index={index} />
-                    ))}
+                    {currentDay.schedule.reduce((acc, item, index, arr) => {
+                        // Grouper les sessions parallèles (même heure)
+                        if (item.parallel) return acc; // déjà traité avec la précédente
+                        const next = arr[index + 1];
+                        if (next && next.parallel && next.time === item.time) {
+                            // Afficher les deux en parallèle
+                            acc.push(
+                                <div key={`parallel-${index}`} className="group relative mb-8 animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
+                                    <div className="absolute left-0 md:left-32 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-slate-700 to-transparent ml-4 md:ml-0 hidden md:block"></div>
+                                    <div className="flex flex-col md:flex-row items-start md:items-start">
+                                        <div className="hidden md:flex flex-col items-end w-32 pr-10 text-right shrink-0 pt-4">
+                                            <span className="text-3xl font-black text-white leading-none mb-1 tracking-tighter">{item.time.split(' - ')[0]}</span>
+                                            <div className="flex items-center justify-end gap-2 text-slate-500">
+                                                <div className="w-4 h-[1px] bg-slate-800"></div>
+                                                <span className="text-sm font-bold tracking-widest">{item.time.split(' - ')[1]}</span>
+                                            </div>
+                                        </div>
+                                        <div className="hidden md:flex absolute left-32 -translate-x-1/2 w-4 h-4 bg-slate-950 border-2 border-blue-500 rounded-full z-10 mt-5 shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+                                        {/* Mobile time */}
+                                        <div className="flex md:hidden items-center space-x-3 mb-4 w-full bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                                            <Clock className="w-5 h-5 text-blue-400" />
+                                            <span className="text-xl font-black text-white">{item.time}</span>
+                                            <span className="text-xs font-bold text-blue-400 uppercase tracking-widest ml-auto">Parallèle</span>
+                                        </div>
+                                        <div className="flex-1 md:ml-12 grid grid-cols-1 gap-4 w-full">
+                                            {[item, next].map((s, i) => {
+                                                const IC = { Users, Star, Zap, Coffee, ShieldCheck, Utensils, Monitor, GlassWater, Heart, Eye, TrendingUp, Award, Trophy }[s.icon] || Clock;
+                                                const audience = s.type === 'Challenge' ? 'Pour les Assistantes' : 'Pour les Praticiens';
+                                                const audienceColor = s.type === 'Challenge' ? 'text-amber-300 border-amber-500/30 bg-amber-500/10' : 'text-blue-300 border-blue-500/30 bg-blue-500/10';
+                                                return (
+                                                    <div key={i} className={`bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-900/80 backdrop-blur-xl border rounded-2xl p-6 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${s.type === 'Challenge' ? 'border-amber-500/30 hover:border-amber-500/50' : 'border-slate-800/50 hover:border-blue-500/30'}`}>
+                                                        <div className="flex items-start justify-between gap-4">
+                                                            <div className="flex-1">
+                                                                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter border ${s.type === 'Challenge' ? 'bg-amber-500/10 border-amber-500/30 text-amber-400' : 'bg-blue-500/10 border-blue-500/30 text-blue-400'}`}>{s.type}</span>
+                                                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold border ${audienceColor}`}>{audience}</span>
+                                                                </div>
+                                                                <h3 className="text-lg md:text-2xl font-bold text-white mb-2 leading-tight">{s.title}</h3>
+                                                                <p className="text-slate-400 text-xs md:text-base leading-relaxed">{s.description}</p>
+                                                            </div>
+                                                            <div className={`p-3 rounded-xl bg-slate-950/50 border border-slate-800 hidden sm:flex items-center justify-center shrink-0 ${s.type === 'Challenge' ? 'text-amber-400' : 'text-blue-400'}`}>
+                                                                <IC size={24} strokeWidth={1.5} />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        } else {
+                            acc.push(<ProgramCard key={`${activeDay}-${index}`} item={item} index={index} />);
+                        }
+                        return acc;
+                    }, [])}
                     <div className="mt-16 p-8 bg-blue-600/10 border border-blue-500/20 rounded-[2rem] backdrop-blur-md animate-fade-in-up">
                         <div className="flex flex-col md:flex-row items-center gap-6">
                             <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/40">
