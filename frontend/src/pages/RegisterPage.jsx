@@ -501,8 +501,9 @@ const RegisterPage = () => {
                         )}
                         {showSummaryModal && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn custom-scrollbar">
-                                    <div className="p-8 md:p-12">
+                                <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-fadeIn">
+                                    {/* Contenu scrollable */}
+                                    <div className="overflow-y-auto custom-scrollbar flex-1 p-8 md:p-12">
                                         <h3 className="text-3xl md:text-4xl font-black text-white mb-8 border-b border-slate-800 pb-5">
                                             Récapitulatif de votre inscription
                                         </h3>
@@ -560,28 +561,29 @@ const RegisterPage = () => {
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="mt-10 flex flex-col-reverse sm:flex-row justify-end space-y-4 space-y-reverse sm:space-y-0 sm:space-x-5">
-                                            <button
-                                                onClick={() => setShowSummaryModal(false)}
-                                                className="px-8 py-3.5 rounded-xl border-2 border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold text-lg"
-                                            >
-                                                Retour pour modifier
-                                            </button>
-                                            <button
-                                                onClick={() => {
-                                                    setShowSummaryModal(false);
-                                                    if (formData.modePaiement === 'carte') {
-                                                        setIsStripeRevealed(true);
-                                                    } else {
-                                                        handleSubmit();
-                                                    }
-                                                }}
-                                                className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-lg transition-all shadow-lg shadow-blue-900/50 transform hover:scale-105"
-                                            >
-                                                {formData.modePaiement === 'carte' ? "Passer au paiement sécurisé" : "Valider définitivement"}
-                                            </button>
-                                        </div>
+                                    {/* Boutons toujours visibles en bas */}
+                                    <div className="flex-shrink-0 border-t border-slate-800 px-8 py-5 flex flex-col-reverse sm:flex-row justify-end gap-4 bg-slate-900 rounded-b-2xl">
+                                        <button
+                                            onClick={() => setShowSummaryModal(false)}
+                                            className="px-8 py-3.5 rounded-xl border-2 border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors font-semibold text-lg"
+                                        >
+                                            Retour pour modifier
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowSummaryModal(false);
+                                                if (formData.modePaiement === 'carte') {
+                                                    setIsStripeRevealed(true);
+                                                } else {
+                                                    handleSubmit();
+                                                }
+                                            }}
+                                            className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-bold text-lg transition-all shadow-lg shadow-blue-900/50 transform hover:scale-105"
+                                        >
+                                            {formData.modePaiement === 'carte' ? "Passer au paiement sécurisé" : "Valider définitivement"}
+                                        </button>
                                     </div>
                                 </div>
                             </div>

@@ -59,14 +59,29 @@ SecToken: ${secureToken}`;
         const frontendUrl = process.env.FRONTEND_URL;
 
         const passwordBlock = defaultPassword ? `
-            <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 15px; border-radius: 4px;">
-                <p style="margin: 0; color: #856404;"><strong>Accès à votre espace personnel :</strong></p>
-                <p style="margin: 5px 0 0 0; color: #856404; font-family: monospace; font-size: 16px;">Mot de passe pro-visoire : <strong>${defaultPassword}</strong></p>
-                <p style="margin: 5px 0 0 0; color: #856404; font-size: 13px;">(Veuillez changer ce mot de passe dès votre première connexion)</p>
+            <div style="background-color: #fff8e1; border: 2px solid #ffc107; padding: 20px; margin-top: 15px; border-radius: 12px;">
+                <p style="margin: 0 0 12px 0; color: #7c5700; font-size: 16px; font-weight: bold;">🔐 Vos identifiants de connexion</p>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 6px 0; color: #856404; font-size: 14px; width: 140px;"><strong>Email :</strong></td>
+                        <td style="padding: 6px 0; color: #1e293b; font-family: monospace; font-size: 15px; font-weight: bold;">${user.email}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0; color: #856404; font-size: 14px;"><strong>Mot de passe :</strong></td>
+                        <td style="padding: 6px 0; color: #1e293b; font-family: monospace; font-size: 18px; font-weight: bold; letter-spacing: 2px;">${defaultPassword}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 0; color: #856404; font-size: 14px;"><strong>Connexion :</strong></td>
+                        <td style="padding: 6px 0;"><a href="${frontendUrl}/login" style="color: #2563eb; font-size: 14px;">${frontendUrl}/login</a></td>
+                    </tr>
+                </table>
+                <p style="margin: 12px 0 0 0; color: #856404; font-size: 12px; font-style: italic;">⚠️ Veuillez changer ce mot de passe dès votre première connexion.</p>
             </div>
         ` : '';
 
         let unpaidBlock = '';
+        const rib = (user.pays === 'Tunisie') ? 'TN59 0800 2000 6410 6100 8446' : 'FR76 1009 6181 3000 0528 0620 156';
+
         if (!isPaid) {
             if (user.modePaiement === 'especes' || user.modePaiement === 'sur_place') {
                 unpaidBlock = `
@@ -75,13 +90,22 @@ SecToken: ${secureToken}`;
                     <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
                         Votre passe a bien été réservé. Vous avez choisi de régler l'inscription <strong>en espèces sur place</strong> le jour du congrès.
                     </p>
+                    <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 14px;">
+                        Montant à prévoir : <strong>${user.totalPrice || 0} ${user.currency || 'TND'}</strong>
+                    </p>
                 </div>`;
             } else if (user.modePaiement === 'virement') {
                 unpaidBlock = `
-                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; margin-top: 20px; border-radius: 8px;">
-                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">ℹ️ Virement en attente</h3>
+                <div style="background-color: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin-top: 20px; border-radius: 8px;">
+                    <h3 style="margin: 0; color: #0369a1; font-size: 18px;">🏦 Virement bancaire en attente</h3>
                     <p style="margin: 8px 0 0 0; color: #0c4a6e; font-size: 15px;">
-                        Votre passe a bien été réservé. Nous sommes en attente de la réception de votre virement bancaire pour valider définitivement votre badge.
+                        Votre passe a bien été réservé. Veuillez effectuer un virement du montant de <strong>${user.totalPrice || 0} ${user.currency || 'TND'}</strong> vers le compte suivant :
+                    </p>
+                    <div style="background: #fff; border: 1px solid #bae6fd; border-radius: 8px; padding: 15px; margin-top: 12px; font-family: monospace; font-size: 16px; color: #0369a1; text-align: center; font-weight: bold; letter-spacing: 1px;">
+                        ${rib}
+                    </div>
+                    <p style="margin: 10px 0 0 0; color: #0c4a6e; font-size: 13px; text-align: center;">
+                        Indiquez <strong>${user.prenom} ${user.nom}</strong> en référence du virement.
                     </p>
                 </div>`;
             } else {
@@ -92,7 +116,7 @@ SecToken: ${secureToken}`;
                         Votre passe a bien été réservé, mais <strong>votre inscription n'est pas encore finalisée</strong> car nous n'avons pas reçu votre paiement en ligne.
                     </p>
                     <p style="margin: 8px 0 0 0; color: #b71c1c; font-size: 14px;">
-                        Veuillez finaliser votre règlement (en ligne depuis votre espace ou sur place le Jour J) pour activer votre badge officiel.
+                        Connectez-vous à votre espace personnel pour finaliser votre règlement par carte bancaire.
                     </p>
                 </div>`;
             }
@@ -185,12 +209,12 @@ SecToken: ${secureToken}`;
 
                                         <div style="text-align: center; margin-top: 40px;">
                                             ${!isPaid ? `
-                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder au paiement.</p>
+                                                <p style="color: #dc2626; font-size: 14px; margin-bottom: 12px;">⚠️ Votre inscription est en attente de règlement. Cliquez ci-dessous pour accéder à votre espace et finaliser votre paiement.</p>
                                                 <a href="${frontendUrl}/register?step=3" 
                                                    style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 18px 40px; text-decoration: none; border-radius: 12px; font-weight: bold; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(239,68,68,0.4);">
-                                                    Finaliser mon Paiement
+                                                    Finaliser mon Paiement →
                                                 </a>
-                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Paiement sécurisé par carte ou consultation de votre dossier</p>
+                                                <p style="color: #94a3b8; font-size: 12px; margin-top: 10px;">Vous serez redirigé vers votre espace personnel — section règlement</p>
                                             ` : `
                                                 <p style="color: #059669; font-size: 14px; margin-bottom: 12px;">✅ Votre inscription est confirmée. Retrouvez votre badge et vos accès ci-dessous.</p>
                                                 <a href="${frontendUrl}/dashboard" 

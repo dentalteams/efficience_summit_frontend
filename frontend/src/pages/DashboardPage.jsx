@@ -453,7 +453,7 @@ SecToken: ${secureToken}`;
                                     <Clock className="text-cyan-400 w-6 h-6 flex-shrink-0 mt-1" />
                                     <div>
                                         <p className="text-white font-semibold">Horaires</p>
-                                        <p className="text-blue-200">8h00 - 18h00 (les deux jours)</p>
+                                        <p className="text-blue-200">8h30 - 18h00 (les deux jours)</p>
                                     </div>
                                 </div>
                             </div>

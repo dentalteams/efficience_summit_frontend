@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const auth = require('../middleware/auth');
+const User = require('../models/User');
+const { sendRegistrationEmail } = require('../utils/emailService');
 
 // @route   POST api/payment/create-intent
 // @desc    Create a Stripe Payment Intent
@@ -87,6 +90,44 @@ router.post('/webhook', async (req, res) => {
 
 
     res.send();
+});
+
+// @route   POST api/payment/finalize
+// @desc    Verify a Stripe PaymentIntent and mark user as paid (called from dashboard)
+// @access  Private
+router.post('/finalize', auth, async (req, res) => {
+    try {
+        const { paymentIntentId } = req.body;
+        if (!paymentIntentId) {
+            return res.status(400).json({ message: 'paymentIntentId requis.' });
+        }
+
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+            return res.status(400).json({ message: 'Le paiement Stripe n\'a pas été validé.' });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user.id,
+            { paymentStatus: 'paid', paymentIntentId },
+            { new: true }
+        ).select('-password');
+
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        }
+
+        console.log(`✅ Paiement finalisé pour ${user.email} (Intent: ${paymentIntentId})`);
+
+        // Envoyer l'email de confirmation avec statut payé
+        sendRegistrationEmail(user).catch(err => console.error('Email error after finalize:', err));
+
+        res.json({ message: 'Paiement validé avec succès.', user });
+    } catch (err) {
+        console.error('Erreur /finalize:', err.message);
+        res.status(500).json({ message: 'Erreur lors de la validation du paiement.', error: err.message });
+    }
 });
 
 module.exports = router;

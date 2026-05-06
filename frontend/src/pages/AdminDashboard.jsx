@@ -1013,74 +1013,190 @@ const AdminDashboard = () => {
 
                             <form onSubmit={handleSubmit} className="p-8 max-h-[70vh] overflow-y-auto custom-scrollbar">
                                 <div className="grid grid-cols-2 gap-6">
+
+                                    {/* Identité */}
+                                    <div className="col-span-2">
+                                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Informations personnelles</p>
+                                    </div>
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Prénom</label>
-                                        <input name="prenom" value={formData.prenom} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" required />
+                                        <input name="prenom" value={formData.prenom} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none transition-colors" required />
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nom</label>
-                                        <input name="nom" value={formData.nom} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" required />
+                                        <input name="nom" value={formData.nom} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none transition-colors" required />
                                     </div>
-                                    <div className="space-y-2 col-span-2 md:col-span-1">
+                                    <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
-                                        <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" required />
+                                        <input name="email" type="email" value={formData.email} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none transition-colors" required />
                                     </div>
-                                    <div className="space-y-2 col-span-2 md:col-span-1">
+                                    <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Téléphone</label>
-                                        <input name="telephone" value={formData.telephone} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" />
+                                        <PhoneInput
+                                            country={'tn'}
+                                            value={formData.telephone}
+                                            onChange={(phone) => setFormData(prev => ({ ...prev, telephone: phone }))}
+                                            containerClass="!w-full"
+                                            inputClass="!w-full !h-[50px] !bg-[#050B14] !text-white !rounded-xl !pl-14 !text-base !border-white/10 focus:!border-blue-500 !transition-all"
+                                            buttonClass="!h-[50px] !bg-[#050B14] !rounded-l-xl hover:!bg-[#0A111F] !border-white/10"
+                                            dropdownClass="!bg-slate-900 !text-white !border-slate-700"
+                                        />
                                     </div>
-                                    <div className="space-y-2 col-span-2 md:col-span-1">
+                                    <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Ville</label>
-                                        <input name="ville" value={formData.ville} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" required />
+                                        <input name="ville" value={formData.ville} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none transition-colors" />
                                     </div>
-                                    <div className="space-y-2 col-span-2 md:col-span-1">
+                                    <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Pays</label>
-                                        <input name="pays" value={formData.pays} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 focus:bg-[#0A111F] outline-none transition-colors" required />
+                                        <select name="pays" value={['Tunisie', 'Algérie', 'Maroc', 'France', 'Belgique', 'Suisse'].includes(formData.pays) ? formData.pays : 'Autre'} onChange={e => {
+                                            if (e.target.value === 'Autre') setFormData(prev => ({ ...prev, pays: '' }));
+                                            else setFormData(prev => ({ ...prev, pays: e.target.value }));
+                                        }} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
+                                            <option value="Tunisie">Tunisie</option>
+                                            <option value="Algérie">Algérie</option>
+                                            <option value="Maroc">Maroc</option>
+                                            <option value="France">France</option>
+                                            <option value="Belgique">Belgique</option>
+                                            <option value="Suisse">Suisse</option>
+                                            <option value="Autre">Autre</option>
+                                        </select>
+                                        {!['Tunisie', 'Algérie', 'Maroc', 'France', 'Belgique', 'Suisse'].includes(formData.pays) && (
+                                            <input value={formData.pays} onChange={e => setFormData(prev => ({ ...prev, pays: e.target.value }))} placeholder="Précisez le pays..." className="w-full bg-[#050B14] border border-blue-500/50 rounded-xl px-4 py-3 text-white outline-none mt-2" />
+                                        )}
                                     </div>
-                                    <div className="space-y-2 col-span-2">
-                                        <div className="w-full h-[1px] bg-white/5 my-2"></div>
+
+                                    {/* Participation */}
+                                    <div className="col-span-2 pt-2">
+                                        <div className="h-[1px] bg-white/5 mb-4"></div>
+                                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Participation</p>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Rôle</label>
                                         <select name="role" value={formData.role} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
-                                            <option value="praticien">Praticien (Normal)</option>
+                                            <option value="praticien">Chirurgien-dentiste</option>
                                             <option value="assistante">Assistante</option>
-                                            <option value="exposant">Exposant / VIP</option>
-                                            <option value="etudiant">Étudiant spécial</option>
+                                            <option value="exposant">Exposant</option>
+                                            <option value="etudiant">Étudiant</option>
                                         </select>
+                                    </div>
+                                    {formData.role !== 'exposant' && (
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Durée</label>
+                                            <select name="dureeParticipation" value={formData.dureeParticipation || '2_jours'} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
+                                                <option value="2_jours">2 Jours (15 & 16 Mai)</option>
+                                                <option value="1_jour_15">1 Jour — 15 Mai</option>
+                                                <option value="1_jour_16">1 Jour — 16 Mai</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    {formData.role === 'exposant' && (
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Type de Stand</label>
+                                            <select name="typeStand" value={formData.typeStand || '3m'} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
+                                                <option value="3m">Stand 3m²</option>
+                                                <option value="8m">Stand 8m²</option>
+                                            </select>
+                                        </div>
+                                    )}
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Tickets Repas</label>
+                                        <input name="ticketsRepas" type="number" min="0" max="20" value={formData.ticketsRepas || 0} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Nb Participants total</label>
+                                        <input name="nbParticipants" type="number" min="1" max="10" value={formData.nbParticipants || 1} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none" />
+                                    </div>
+
+                                    {/* Accompagnants */}
+                                    {formData.role !== 'exposant' && parseInt(formData.nbParticipants) > 1 && (
+                                        <div className="col-span-2 space-y-3">
+                                            <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Accompagnants ({parseInt(formData.nbParticipants) - 1})</p>
+                                            {Array.from({ length: parseInt(formData.nbParticipants) - 1 }).map((_, i) => {
+                                                const ap = formData.additionalParticipants?.[i] || {};
+                                                const updateAp = (field, val) => {
+                                                    const updated = [...(formData.additionalParticipants || [])];
+                                                    updated[i] = { ...updated[i], [field]: val };
+                                                    setFormData(prev => ({ ...prev, additionalParticipants: updated }));
+                                                };
+                                                return (
+                                                    <div key={i} className="p-4 bg-[#050B14] rounded-xl border border-purple-500/20 grid grid-cols-2 md:grid-cols-4 gap-3">
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Prénom</label>
+                                                            <input value={ap.prenom || ''} onChange={e => updateAp('prenom', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none text-sm" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Nom</label>
+                                                            <input value={ap.nom || ''} onChange={e => updateAp('nom', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none text-sm" />
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Rôle</label>
+                                                            <select value={ap.role || 'assistante'} onChange={e => updateAp('role', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none text-sm">
+                                                                <option value="praticien">Praticien</option>
+                                                                <option value="assistante">Assistante</option>
+                                                                <option value="etudiant">Étudiant</option>
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 uppercase font-bold block mb-1">Repas</label>
+                                                            <input type="number" min="0" max="5" value={ap.ticketsRepas || 0} onChange={e => updateAp('ticketsRepas', e.target.value)} className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-white outline-none text-sm" />
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {/* Paiement */}
+                                    <div className="col-span-2 pt-2">
+                                        <div className="h-[1px] bg-white/5 mb-4"></div>
+                                        <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Paiement</p>
                                     </div>
                                     <div className="space-y-2">
                                         <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Mode de Paiement</label>
                                         <select name="modePaiement" value={formData.modePaiement} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
-                                            <option value="especes">En Espèces / Sur Place</option>
+                                            <option value="especes">En Espèces</option>
                                             <option value="virement">Virement Bancaire</option>
-                                            <option value="carte">Carte en ligne (Stripe)</option>
+                                            <option value="carte">Carte en ligne</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Prix Facturé</label>
-                                        <input name="totalPrice" type="number" value={formData.totalPrice} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-black text-lg text-blue-400" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Devise Période</label>
-                                        <select name="currency" value={formData.currency} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white outline-none font-bold">
-                                            <option value="TND">TND (Dinar)</option>
-                                            <option value="€">EUR (€)</option>
+                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Statut Paiement</label>
+                                        <select name="paymentStatus" value={formData.paymentStatus} onChange={handleInputChange} className={`w-full bg-[#050B14] border rounded-xl px-4 py-3.5 outline-none font-black ${formData.paymentStatus === 'paid' ? 'text-green-400 border-green-500/30' : 'text-amber-400 border-amber-500/30'}`}>
+                                            <option value="pending" className="bg-slate-900">⏳ En attente</option>
+                                            <option value="paid" className="bg-slate-900">✅ Payé / Validé</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-2 col-span-2">
-                                        <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">Validation Paiement</label>
-                                        <select name="paymentStatus" value={formData.paymentStatus} onChange={handleInputChange} className={`w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 outline-none font-black ${formData.paymentStatus === 'paid' ? 'text-green-500 bg-green-900/10 border-green-500/30' : 'text-amber-500'}`}>
-                                            <option value="pending">⏳ En attente (Non payé)</option>
-                                            <option value="paid">Payé / Validé</option>
-                                        </select>
-                                    </div>
+                                    {formData.paymentStatus !== 'paid' && (
+                                        <div className="col-span-2 space-y-2">
+                                            <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest ml-1">
+                                                Prix Facturé <span className="text-amber-400 normal-case font-normal">(modifiable — paiement en attente)</span>
+                                            </label>
+                                            <div className="relative">
+                                                <input name="totalPrice" type="number" value={formData.totalPrice} onChange={handleInputChange} className="w-full bg-[#050B14] border border-amber-500/30 rounded-xl px-4 py-3.5 text-blue-400 outline-none font-black text-xl focus:border-amber-500/60" />
+                                                <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                                    <select name="currency" value={formData.currency} onChange={handleInputChange} className="bg-transparent text-slate-400 font-bold outline-none cursor-pointer">
+                                                        <option value="TND" className="bg-slate-900">TND</option>
+                                                        <option value="€" className="bg-slate-900">EUR</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {formData.paymentStatus === 'paid' && (
+                                        <div className="col-span-2 p-4 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center gap-3">
+                                            <Check className="w-5 h-5 text-green-400 shrink-0" />
+                                            <div>
+                                                <p className="text-green-400 font-bold text-sm">Paiement confirmé — {formData.totalPrice} {formData.currency}</p>
+                                                <p className="text-slate-500 text-xs">Le prix ne peut pas être modifié après validation du paiement.</p>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div className="mt-10 flex space-x-4">
-                                    <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(37,99,235,0.5)] transition-all flex items-center justify-center space-x-2 border border-blue-400/20">
+                                <div className="mt-8 flex space-x-4">
+                                    <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-black py-4 rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all flex items-center justify-center space-x-2 border border-blue-400/20">
                                         <Save size={20} />
-                                        <span>{editingUser ? 'Sauvegarder les modifications' : 'Générer Inscription'}</span>
+                                        <span>Sauvegarder les modifications</span>
                                     </button>
                                 </div>
                             </form>

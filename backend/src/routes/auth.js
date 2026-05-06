@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const Settings = require('../models/Settings');
 const { sendRegistrationEmail, sendPasswordResetEmail } = require('../utils/emailService');
 const crypto = require('crypto');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -39,6 +40,12 @@ router.post('/register', registerLimiter, async (req, res) => {
         const { email, password, role, paymentIntentId, paymentStatus } = req.body;
 
         console.log(`📝 Tentative d'inscription pour: ${email} (Rôle: ${role})`);
+
+        // Vérifier si les inscriptions sont ouvertes
+        const settings = await Settings.findOne();
+        if (settings && settings.isRegistrationOpen === false) {
+            return res.status(403).json({ message: "Les inscriptions sont actuellement fermées. Veuillez contacter l'organisation." });
+        }
 
         // Check if user exists
         let user = await User.findOne({ email });
@@ -326,6 +333,9 @@ router.put('/update-payment-mode', auth, async (req, res) => {
 
         user.modePaiement = modePaiement;
         await user.save();
+
+        // Renvoyer l'email de confirmation avec le nouveau mode de paiement
+        sendRegistrationEmail(user).catch(err => console.error('Email error after mode update:', err));
 
         res.json({ message: 'Mode de paiement mis à jour', modePaiement });
     } catch (err) {

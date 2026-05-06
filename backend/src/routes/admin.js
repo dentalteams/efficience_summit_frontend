@@ -116,9 +116,9 @@ router.put('/users/:id', async (req, res) => {
         // Prevent sensitive fields from being updated directly via this route
         const allowedUpdates = [
             'nom', 'prenom', 'email', 'telephone', 'ville', 'pays',
-            'role', 'paymentStatus', 'modePaiement', 'totalPrice',
+            'role', 'paymentStatus', 'modePaiement', 'totalPrice', 'currency',
             'nbParticipants', 'additionalParticipants', 'dureeParticipation',
-            'ticketsRepas', 'typeStand', 'produitsExposes'
+            'ticketsRepas', 'typeStand', 'produitsExposes', 'association'
         ];
 
         const updates = Object.keys(req.body);
