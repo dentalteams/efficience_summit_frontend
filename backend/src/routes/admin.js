@@ -121,14 +121,18 @@ router.put('/users/:id', async (req, res) => {
             'ticketsRepas', 'typeStand', 'produitsExposes', 'association'
         ];
 
-        const updates = Object.keys(req.body);
-        const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+        const updateData = {};
+        Object.keys(req.body).forEach(key => {
+            if (allowedUpdates.includes(key)) {
+                updateData[key] = req.body[key];
+            }
+        });
 
-        if (!isValidOperation) {
-            return res.status(400).json({ message: 'Certains champs ne peuvent pas être modifiés directement.' });
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ message: 'Aucun champ valide à modifier.' });
         }
 
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        const user = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé' });
