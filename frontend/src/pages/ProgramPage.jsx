@@ -122,7 +122,7 @@ const ProgramPage = () => {
                 { time: "11h00 - 12h30", title: t('program.d2_s3_title'), description: t('program.d2_s3_desc'), type: "Conférence", icon: "Zap" },
                 { time: "12h30 - 14h30", title: t('program.d1_s4_title'), description: t('program.d1_s4_desc'), type: "Repas", icon: "Utensils" },
                 { time: "14h30 - 16h00", title: t('program.d2_s4_title'), description: t('program.d2_s4_desc'), type: "Conférence", icon: "Users" },
-                { time: "16h30 - 17h00", title: t('program.d2_s7_title'), description: t('program.d2_s7_desc'), type: "Cérémonie", icon: "Award" }
+                { time: "16h00 - 16h30", title: t('program.d2_s7_title'), description: t('program.d2_s7_desc'), type: "Cérémonie", icon: "Award" }
             ]
         }
     };
