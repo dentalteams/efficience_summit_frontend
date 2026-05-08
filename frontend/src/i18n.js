@@ -110,8 +110,6 @@ const resources = {
         d2_s4_desc: "Les clefs de la réussite du travail en équipe.",
         d2_s5_title: "Challenge Assistante",
         d2_s5_desc: "De l'analyse à l'action : développer excellence, anticipation et leadership au cabinet.",
-        d2_s6_title: "Repas & Networking",
-        d2_s6_desc: "Pause conviviale avant la clôture.",
         d2_s7_title: "Efficience Awards & Clôture",
         d2_s7_desc: "Finale du challenge des assistantes & Remise des attestations.",
       },
