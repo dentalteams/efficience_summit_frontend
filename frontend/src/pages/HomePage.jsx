@@ -11,7 +11,7 @@ import Footer from '../components/Footer';
 const VideoCard = ({ video }) => {
     const [isPlaying, setIsPlaying] = useState(false);
 
-    // Extract YouTube ID to get the automatic thumbnail
+
     const videoId = video.src.split('embed/')[1]?.split('?')[0];
     const thumbUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
@@ -19,7 +19,7 @@ const VideoCard = ({ video }) => {
         <div className="group cursor-pointer">
             <div className="relative aspect-video bg-slate-950 rounded-3xl overflow-hidden border border-blue-400/20 shadow-2xl hover:shadow-blue-500/30 transition-all duration-500">
 
-                {/* Background Thumbnail - shown while loading and before playing */}
+
                 <div className="absolute inset-0">
                     <img
                         src={thumbUrl}
@@ -212,7 +212,7 @@ const HomePage = () => {
                 </div>
             </div>
 
-            {/* Video Section*/}
+
             <div id="moments-2025" className="relative z-10 py-24 px-4 bg-gradient-to-b from-transparent via-blue-950/20 to-transparent">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
@@ -238,7 +238,7 @@ const HomePage = () => {
                 </div>
             </div>
 
-            {/* Hotel Section */}
+
             <div className="relative z-10 py-24 px-4">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">

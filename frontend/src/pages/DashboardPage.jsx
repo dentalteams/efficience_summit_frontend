@@ -45,7 +45,7 @@ const DashboardPage = () => {
         }
     }, [authUser?._id]);
 
-    // Scroll vers la section de paiement si on arrive depuis l'email (#payment)
+
     useEffect(() => {
         if (!loadingUser && user && location.hash === '#payment' && paymentRef.current) {
             setTimeout(() => {
@@ -65,19 +65,18 @@ const DashboardPage = () => {
     );
     if (!user) return null;
 
-    // Fonction de génération sécurisée du contenu du QR Code
+
     const generateSecureQRData = (participant, isPrincipal = true) => {
         const isPaid = user.paymentStatus === 'paid';
         const status = isPaid ? 'Payé' : 'Non payé';
         const rawToken = `${participant?.registrationNumber || user.registrationNumber}-${isPaid ? 'VAL' : 'PEND'}-2026`;
         const secureToken = btoa(rawToken).substring(0, 10).toUpperCase();
 
-        // Calcul du total des tickets repas (principal + tous les accompagnants)
+
         const additionalParticipants = user.additionalParticipants || [];
         const totalTickets = (parseInt(user.ticketsRepas) || 0) + additionalParticipants.reduce((sum, p) => sum + (parseInt(p.ticketsRepas) || 0), 0);
 
         if (isPrincipal) {
-            // Liste des accompagnants formatée pour le QR
             let accompagnantLines = '';
             if (additionalParticipants.length > 0) {
                 accompagnantLines = '\nACCOMPAGNANTS:';
@@ -113,13 +112,12 @@ SecToken: ${secureToken}`;
     const downloadBadge = async () => {
         setDownloading(true);
         try {
-            // Create a clean canvas for the PDF
+
             const canvas = document.createElement('canvas');
             canvas.width = 800;
             canvas.height = 1100;
             const ctx = canvas.getContext('2d');
 
-            // Background
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -132,7 +130,7 @@ SecToken: ${secureToken}`;
             ctx.font = '24px Arial';
             ctx.fillText('15 & 16 Mai - Monastir', 400, 150);
 
-            // Get the QR Code Canvas
+
             const qrCanvas = document.getElementById('qr-canvas');
             if (qrCanvas) {
                 ctx.drawImage(qrCanvas, 200, 250, 400, 400);
@@ -235,7 +233,7 @@ SecToken: ${secureToken}`;
                         </div>
                     </div>
 
-                    {/* QR Code Card */}
+
                     <div className="lg:col-span-2">
                         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
                             <div className="flex items-center mb-6">
@@ -247,7 +245,7 @@ SecToken: ${secureToken}`;
                                     <p className="text-blue-200">À présenter le jour du congrès</p>
                                 </div>
                             </div>
-                            {/* Visualization Badge (SVG) */}
+
                             <div className="bg-slate-900/50 p-8 rounded-2xl border border-white/5">
                                 <div className="flex justify-center border-4 border-white/10 p-4 rounded-xl bg-white">
                                     <QRCodeSVG
@@ -301,7 +299,7 @@ SecToken: ${secureToken}`;
                             </div>
                         </div>
 
-                        {/* 🆕 Détails de l'Inscription */}
+
                         <div className="bg-gradient-to-br from-slate-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-500/20 p-8 mb-6">
                             <h3 className="text-2xl font-bold text-white mb-6">Détails de l'Inscription</h3>
 
@@ -329,13 +327,13 @@ SecToken: ${secureToken}`;
 
                                 {user.paymentStatus !== 'paid' && (
                                     <div ref={paymentRef} id="payment" className="p-6 border border-blue-500/20 rounded-2xl bg-blue-500/5 flex flex-col gap-6">
-                                        {/* Header résumé */}
+
                                         <div>
                                             <p className="text-white font-bold text-lg mb-1">💳 Finaliser votre règlement</p>
                                             <p className="text-blue-200 text-sm">Montant dû : <span className="font-black text-white text-xl">{user.totalPrice} {user.currency || 'TND'}</span></p>
                                         </div>
 
-                                        {/* Virement */}
+
                                         {user.modePaiement === 'virement' && (
                                             <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30">
                                                 <p className="text-blue-300 text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2"><Building className="w-4 h-4" />Coordonnées Bancaires (RIB/RIP)</p>
@@ -346,14 +344,14 @@ SecToken: ${secureToken}`;
                                             </div>
                                         )}
 
-                                        {/* Espèces */}
+
                                         {(user.modePaiement === 'especes' || user.modePaiement === 'sur_place') && (
                                             <div className="bg-slate-900/80 p-5 rounded-xl border border-blue-500/30">
                                                 <p className="text-blue-200 text-sm flex items-center gap-2"><Banknote className="w-5 h-5 text-blue-400" />Règlement en espèces prévu le jour du congrès à l'accueil.</p>
                                             </div>
                                         )}
 
-                                        {/* Carte Stripe */}
+
                                         {user.modePaiement === 'carte' && (
                                             <div>
                                                 {!showStripeForm ? (

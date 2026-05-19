@@ -45,7 +45,7 @@ const ProgramCard = ({ item, index }) => {
                 )}
 
 
-                {/* Mobile view time band */}
+
                 {item.time && (
                     <div className="flex md:hidden items-center space-x-3 mb-4 w-full bg-slate-900/50 p-3 rounded-xl border border-slate-800">
                         <Clock className="w-5 h-5 text-blue-400" />
@@ -156,7 +156,7 @@ const ProgramPage = () => {
                     allowFullScreen
                 ></iframe>
 
-                {/* Overlay pour bloquer les contrôles YouTube sur mobile */}
+
                 <div className="absolute inset-0" style={{ pointerEvents: 'all' }}></div>
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
@@ -236,11 +236,11 @@ const ProgramPage = () => {
 
                 <div className="space-y-4">
                     {currentDay.schedule.reduce((acc, item, index, arr) => {
-                        // Grouper les sessions parallèles (même heure)
-                        if (item.parallel) return acc; // déjà traité avec la précédente
+
+                        if (item.parallel) return acc;
                         const next = arr[index + 1];
                         if (next && next.parallel && next.time === item.time) {
-                            // Afficher les deux en parallèle
+
                             acc.push(
                                 <div key={`parallel-${index}`} className="group relative mb-8 animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
                                     <div className="absolute left-0 md:left-32 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500/50 via-slate-700 to-transparent ml-4 md:ml-0 hidden md:block"></div>

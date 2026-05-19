@@ -144,7 +144,7 @@ const LoginPage = () => {
                 </div>
             </div>
 
-            {/* Forgot Password Modal */}
+
             {isForgotModalOpen && (
                 <ForgotPasswordModal onClose={() => setIsForgotModalOpen(false)} />
             )}
@@ -154,7 +154,7 @@ const LoginPage = () => {
 
 const ForgotPasswordModal = ({ onClose }) => {
     const [email, setEmail] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
     const { t } = useTranslation();
 
@@ -191,7 +191,7 @@ const ForgotPasswordModal = ({ onClose }) => {
                     <div className="text-center py-4">
                         <CheckCircle className="text-green-500 w-12 h-12 mx-auto mb-4" />
                         <p className="text-green-300 font-bold mb-6">{message}</p>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="w-full py-4 bg-white/10 text-white rounded-2xl font-bold hover:bg-white/20 transition-all"
                         >

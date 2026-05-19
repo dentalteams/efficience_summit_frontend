@@ -72,17 +72,17 @@ const RegisterPage = () => {
     const [errors, setErrors] = useState({});
     const [priceOverride, setPriceOverride] = useState(null); // prix fixé depuis la DB pour returning user
 
-    // Auto-resume step 3 if requested via URL
+
     useEffect(() => {
         if (!location.search.includes('step=3')) return;
 
         if (!authUser) {
-            // Non connecté → login puis retour ici
+
             navigate('/login', { state: { from: { pathname: '/register', search: '?step=3' } } });
             return;
         }
 
-        // Connecté : charger les données fraîches depuis l'API
+
         const loadReturningUser = async () => {
             try {
                 const res = await axios.get('/api/auth/me');
@@ -107,7 +107,7 @@ const RegisterPage = () => {
                     password: '',
                     confirmPassword: ''
                 }));
-                // Utiliser le prix enregistré en DB, pas le recalcul
+
                 setPriceOverride({ price: dbUser.totalPrice, currency: dbUser.currency || 'TND' });
                 setIsReturningUser(true);
                 setStep(3);
@@ -133,7 +133,7 @@ const RegisterPage = () => {
                 if (formData.role === 'etudiant') {
                     price = formData.dureeParticipation === '2_jours' ? 30 : 15;
                 } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
-                    // For Algeria with association? The user didn't specify. We fallback to normal praticien price if needed, or 200.
+
                     price = formData.dureeParticipation === '2_jours' ? 200 : 150;
                 } else if (formData.role === 'praticien') {
                     price = formData.dureeParticipation === '2_jours' ? 200 : 150;
@@ -143,7 +143,7 @@ const RegisterPage = () => {
                     price = formData.dureeParticipation === '2_jours' ? 430 : 150;
                 }
 
-                // Additional participants
+
                 if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
                     const addParticipants = formData.additionalParticipants || [];
                     const maxAdditional = parseInt(formData.nbParticipants) - 1;
@@ -157,19 +157,19 @@ const RegisterPage = () => {
                     }
                 }
 
-                // Apply Early Bird Discount (20% before April 4, 2026) -> we can keep it
+
                 const today = new Date();
                 const deadline = new Date('2026-04-04');
                 if (today < deadline && !['etudiant', 'exposant'].includes(formData.role) && !formData.association) {
                     price = Math.round(price * 0.8);
                 }
 
-                // Apply Code Promo (20% discount)
+
                 if (formData.codePromo && ['SUMMIT20', 'DOCIC'].includes(formData.codePromo)) {
                     price = Math.round(price * 0.8);
                 }
 
-                // --- REPAS (Non remisable) ---
+
                 let totalTickets = parseInt(formData.ticketsRepas) || 0;
                 if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
                     const maxAdditional = parseInt(formData.nbParticipants) - 1;
@@ -185,13 +185,13 @@ const RegisterPage = () => {
                 price += (totalTickets * 27); // 27€ for Algeria
 
             } else {
-                // Tunisie / Maroc
+
                 curr = 'TND';
 
                 if (formData.role === 'etudiant') {
                     price = formData.dureeParticipation === '2_jours' ? 100 : 50;
                 } else if (formData.association && ['Tunisian acadmi', 'ADPC', 'STMOLP'].includes(formData.association)) {
-                    price = 500; // Tarif partenaire associations
+                    price = 500;
                 } else if (formData.role === 'praticien') {
                     price = formData.dureeParticipation === '2_jours' ? 700 : 500;
                 } else if (formData.role === 'assistante') {
@@ -200,7 +200,7 @@ const RegisterPage = () => {
                     price = formData.typeStand === '8m' ? 2500 : 1500;
                 }
 
-                // Additional participants
+
                 if (formData.role !== 'exposant' && formData.nbParticipants > 1) {
                     const addParticipants = formData.additionalParticipants || [];
                     const maxAdditional = parseInt(formData.nbParticipants) - 1;
@@ -214,7 +214,7 @@ const RegisterPage = () => {
                     }
                 }
 
-                // Apply Early Bird
+
                 const today = new Date();
                 const deadline = new Date('2026-04-04');
                 if (today < deadline && !['etudiant', 'exposant'].includes(formData.role) && !formData.association) {
@@ -240,12 +240,11 @@ const RegisterPage = () => {
                 price += (totalTickets * 90);
             }
         } else {
-            // Europe and others
+
             curr = '€';
-            // Premier participant
             price = (formData.role === 'assistante' ? 300 : 500);
 
-            // Participants supplémentaires
+
             if (formData.nbParticipants > 1) {
                 const addParticipants = formData.additionalParticipants || [];
                 const maxAdditional = parseInt(formData.nbParticipants) - 1;
@@ -259,7 +258,7 @@ const RegisterPage = () => {
         setTotalPrice(price);
     }, [formData]);
 
-    // Pour un returning user, on utilise le prix enregistré en DB
+
     const effectiveTotalPrice = priceOverride ? priceOverride.price : totalPrice;
     const effectiveCurrency = priceOverride ? priceOverride.currency : currency;
 
@@ -269,12 +268,12 @@ const RegisterPage = () => {
         if (name === 'pays') {
             const isTargetMaghreb = ['Tunisie', 'Algérie', 'Maroc'].includes(value);
             if (!isTargetMaghreb) {
-                // Si c'est l'Europe (France, etc.), on fixe les options
+
                 setFormData(prev => ({
                     ...prev,
                     [name]: value,
                     dureeParticipation: '2_jours',
-                    ticketsRepas: 2, // 2 jours = 2 repas inclus
+                    ticketsRepas: 2,
                     additionalParticipants: (prev.additionalParticipants || []).map(p => ({
                         ...p,
                         dureeParticipation: '2_jours',
@@ -354,20 +353,20 @@ const RegisterPage = () => {
 
     const handleStripeSuccess = (paymentId) => {
         setFormData(prev => ({ ...prev, paymentIntentId: paymentId, paymentStatus: 'paid' }));
-        // Automatically submit after successful payment
+
         setTimeout(() => handleSubmit(paymentId), 500);
     };
 
     const handleSubmit = async (stripePaymentId = null) => {
         setLoading(true);
         try {
-            // --- Utilisateur déjà inscrit : finaliser le paiement uniquement ---
+
             if (isReturningUser) {
                 if (stripePaymentId) {
-                    // Valider le paiement Stripe côté serveur
+
                     await axios.post('/api/payment/finalize', { paymentIntentId: stripePaymentId });
                 } else {
-                    // Mettre à jour le mode de paiement (virement / espèces)
+
                     await axios.put('/api/auth/update-payment-mode', { modePaiement: formData.modePaiement });
                 }
                 setIsSuccess(true);
@@ -375,7 +374,6 @@ const RegisterPage = () => {
                 return;
             }
 
-            // --- Nouvelle inscription ---
             const finalPays = formData.pays === 'Autre' ? formData.customPays || 'Autre' : formData.pays;
             const registrationData = {
                 ...formData,
@@ -502,14 +500,14 @@ const RegisterPage = () => {
                         {showSummaryModal && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                                 <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl animate-fadeIn">
-                                    {/* Contenu scrollable */}
+
                                     <div className="overflow-y-auto custom-scrollbar flex-1 p-8 md:p-12">
                                         <h3 className="text-3xl md:text-4xl font-black text-white mb-8 border-b border-slate-800 pb-5">
                                             Récapitulatif de votre inscription
                                         </h3>
 
                                         <div className="space-y-8">
-                                            {/* Informations Générales */}
+
                                             <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
                                                 <h4 className="text-blue-400 font-semibold mb-4 text-lg">Informations Personnelles</h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
@@ -523,7 +521,7 @@ const RegisterPage = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Détails et Tickets */}
+
                                             <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
                                                 <h4 className="text-blue-400 font-semibold mb-4 text-lg">Détails de Réservation</h4>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
@@ -546,7 +544,7 @@ const RegisterPage = () => {
                                                 )}
                                             </div>
 
-                                            {/* Paiement */}
+
                                             <div className="bg-slate-800/50 p-6 rounded-xl border border-blue-500/30">
                                                 <h4 className="text-blue-400 font-semibold mb-4 text-lg">Règlement</h4>
                                                 <div className="flex flex-col md:flex-row justify-between items-center bg-slate-900/50 p-5 rounded-lg border border-slate-700 gap-4">
@@ -563,7 +561,7 @@ const RegisterPage = () => {
                                         </div>
                                     </div>
 
-                                    {/* Boutons toujours visibles en bas */}
+
                                     <div className="flex-shrink-0 border-t border-slate-800 px-8 py-5 flex flex-col-reverse sm:flex-row justify-end gap-4 bg-slate-900 rounded-b-2xl">
                                         <button
                                             onClick={() => setShowSummaryModal(false)}

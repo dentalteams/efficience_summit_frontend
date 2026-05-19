@@ -49,7 +49,7 @@ const Step3Payment = ({ formData, handleChange, totalPrice, currency, isMaghreb,
                     </div>
                 </div>
 
-                {/* Paiement */}
+
                 <div className="space-y-6">
                     <div className="space-y-4">
                         <label className="block text-blue-100 font-medium mb-2 text-sm">Mode de règlement</label>

@@ -4,6 +4,12 @@ import { Calendar, LogOut, Menu, X, User, Shield } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
+
+const PARTNERS = [
+    { src: '/LOGO_stmolp.jpg', alt: 'STMOLP', title: 'Société Tunisienne de Médecine Orale et Lasers en Pathologie' },
+    { src: '/logo_tunisian_acadmi.jpg', alt: 'Tunisian Academy', title: 'Tunisian Academy of Dental Sciences' },
+];
+
 const Navigation = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { isAuthenticated, user, logout } = useAuth();
@@ -11,7 +17,7 @@ const Navigation = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Do not render the public navigation if we are in the admin dashboard (it will have its own sidebar)
+
     if (location.pathname.startsWith('/admin')) {
         return null;
     }
@@ -24,15 +30,52 @@ const Navigation = () => {
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-blue-900 to-slate-900 backdrop-blur-lg border-b border-blue-800/30 shadow-xl">
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <div className="flex justify-between items-center h-20">
 
-                    <Link to="/" className="flex items-center relative z-10">
-                        <img src='/Logo_SUMMIT.png' alt='Efficience Summit 2026' className='h-32 w-auto object-contain absolute top-7.5 -translate-y-1/2 left-0 hover:opacity-90 transition-opacity' />
-                        <div className="w-55 h-20"></div>
-                    </Link>
+                    {/* ── Gauche : Logo Summit + logos partenaires (toutes tailles) ── */}
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
 
-                    {/* Desktop Navigation */}
+                        {/* Logo Summit — taille originale via absolute */}
+                        <Link to="/" className="flex-shrink-0 relative">
+                            <img
+                                src='/Logo_SUMMIT.png'
+                                alt='Efficience Summit 2026'
+                                className='h-32 w-auto object-contain absolute left-0 top-1/2 -translate-y-[55%] hover:opacity-90 transition-opacity'
+                            />
+                            <div className="w-44 sm:w-52 h-20 flex items-center"></div>
+                        </Link>
+
+                        {/* Séparateur vertical */}
+                        <div className="w-px h-7 sm:h-8 bg-gradient-to-b from-transparent via-blue-400/35 to-transparent flex-shrink-0"></div>
+
+                        {/* Logos partenaires — visibles sur toutes les tailles */}
+                        <div className="flex items-center gap-1.5 sm:gap-2">
+                            {PARTNERS.map(({ src, alt, title }, i) => (
+                                <div
+                                    key={alt}
+                                    className="group/logo relative partner-logo-nav"
+                                    style={{ animationDelay: `${i * 1.5}s` }}
+                                >
+                                    <div className="partner-shine-wrap rounded-lg sm:rounded-xl overflow-hidden border border-white/15 group-hover/logo:border-blue-400/60 bg-white/95 group-hover/logo:bg-white transition-all duration-300 group-hover/logo:shadow-md group-hover/logo:shadow-blue-500/30 group-hover/logo:scale-110 px-1.5 py-0.5 sm:px-2 sm:py-1">
+                                        <img
+                                            src={src}
+                                            alt={alt}
+                                            className="h-6 sm:h-7 md:h-8 w-auto object-contain"
+                                        />
+                                    </div>
+                                    {/* Tooltip */}
+                                    <div className="hidden sm:block absolute top-full left-1/2 -translate-x-1/2 mt-2.5 px-3 py-1.5 bg-slate-900 border border-blue-500/40 rounded-lg text-[10px] text-blue-200 whitespace-nowrap opacity-0 group-hover/logo:opacity-100 pointer-events-none transition-all duration-200 translate-y-1 group-hover/logo:translate-y-0 shadow-2xl z-50">
+                                        {title}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900"></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+
                     <div className="hidden md:flex items-center space-x-6">
                         {!isAuthenticated ? (
                             <>
@@ -55,7 +98,7 @@ const Navigation = () => {
                                     {t('nav.speakers')}
                                 </Link>
 
-                                {/* Language Switcher Desktop */}
+
                                 <div className="flex items-center bg-white/5 rounded-lg border border-white/10 p-1">
                                     <button
                                         onClick={() => i18n.changeLanguage('fr')}
@@ -116,7 +159,7 @@ const Navigation = () => {
                         )}
                     </div>
 
-                    {/* Mobile Menu Button */}
+
                     <button
                         className="md:hidden text-white"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -126,7 +169,7 @@ const Navigation = () => {
                 </div>
             </div>
 
-            {/* Mobile Menu */}
+
             {mobileMenuOpen && (
                 <div className="md:hidden bg-slate-800/95 backdrop-blur-lg border-t border-blue-800/30">
                     <div className="px-4 py-4 space-y-3">

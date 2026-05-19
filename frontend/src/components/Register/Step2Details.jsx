@@ -6,7 +6,7 @@ import FormSelect from '../Form/FormSelect';
 const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPrice, currency, errors }) => {
     const showParticipants = formData.role !== 'exposant';
 
-    // Europe logic: Fix some defaults but allow the rest of the form to show
+
     React.useEffect(() => {
         if (!isMaghreb) {
             setFormData(prev => ({
@@ -27,14 +27,14 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 <div className="bg-blue-900/40 border border-blue-500/30 p-4 rounded-xl mb-8 flex items-start gap-3">
                     <div className="text-cyan-400 mt-0.5">ℹ️</div>
                     <div className="text-sm text-blue-100">
-                        <strong className="text-white">Information Prise en charge :</strong><br/>
+                        <strong className="text-white">Information Prise en charge :</strong><br />
                         Pour les participants Français, le tarif affiché inclut les 2 jours de formation, les repas ainsi que les pauses. Ce tarif est <strong className="text-cyan-400">éligible à une prise en charge par les organismes FIF PL et OPCO EP</strong>.
                     </div>
                 </div>
             )}
 
 
-            {/* Durée pour Non-Exposants (Maghreb) OU Exposant Algérien */}
+
             {isMaghreb && (formData.role !== 'exposant' || formData.pays === 'Algérie') && (
                 <div className="space-y-6 mb-8">
                     <label className="block text-blue-100 font-medium text-sm">Durée de participation</label>
@@ -60,7 +60,7 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 </div>
             )}
 
-            {/* Restauration */}
+
             {isMaghreb && (
                 <div className="bg-slate-800/30 p-6 rounded-xl border border-slate-700 mb-8">
                     <h3 className="text-white font-semibold mb-4 flex items-center">
@@ -90,7 +90,7 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 </div>
             )}
 
-            {/* Gestion des Participants - Pour Praticiens et Assistantes */}
+
             {showParticipants && (
                 <div className="bg-blue-900/10 p-6 rounded-2xl border border-blue-500/20 mb-8">
                     <h3 className="text-white font-bold mb-4 flex items-center">
@@ -219,7 +219,7 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 </div>
             )}
 
-            {/* Section Exposant (Maghreb) */}
+
             {isMaghreb && formData.role === 'exposant' && (
                 <div className="space-y-6">
                     {formData.pays !== 'Algérie' && (
@@ -254,7 +254,7 @@ const Step2Details = ({ formData, handleChange, setFormData, isMaghreb, totalPri
                 </div>
             )}
 
-            {/* Résumé Dynamique du Prix */}
+
             <div className="mt-10 pt-6 border-t border-slate-700/50">
                 <div className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 p-6 rounded-2xl border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div>

@@ -58,7 +58,7 @@ const AdminDashboard = () => {
 
     // Calcul automatique du prix pour le formulaire admin
     useEffect(() => {
-        if (editingUser) return; // Ne pas recalculer si on édite un user existant
+        if (editingUser) return;
         const isMaghreb = ['Tunisie', 'Algérie', 'Maroc'].includes(formData.pays);
         let price = 0;
         let curr = 'TND';
@@ -96,15 +96,15 @@ const AdminDashboard = () => {
                         if (r === 'etudiant') price += d === '2_jours' ? 100 : 50;
                         else if (r === 'praticien') price += d === '2_jours' ? 700 : 500;
                         else price += d === '2_jours' ? 300 : 200;
-                        // tickets repas accompagnant (90 TND Tunisie/Maroc)
+
                         price += (parseInt(p?.ticketsRepas) || 0) * 90;
                     });
                 }
-                // tickets repas principal
+
                 price += (parseInt(formData.ticketsRepas) || 0) * 90;
             }
         } else {
-            // Europe — repas inclus pour 2 jours, 2 tickets par participant sans surcoût
+
             curr = '€';
             const nbTotal = parseInt(formData.nbParticipants) || 1;
             price = formData.role === 'assistante' ? 300 : 500;
@@ -113,7 +113,7 @@ const AdminDashboard = () => {
                     price += (p?.role === 'assistante' ? 300 : 500);
                 });
             }
-            // Tickets repas inclus : 2 par participant (2 jours)
+
             const ticketsEurope = nbTotal * 2;
             const additionalWithRepas = (formData.additionalParticipants || []).map(p => ({ ...p, ticketsRepas: 2 }));
             setFormData(prev => ({ ...prev, totalPrice: price, currency: curr, ticketsRepas: 2, additionalParticipants: additionalWithRepas }));
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
                 dateInscription,
             ];
 
-            // 5 accompagnants max en colonnes
+
             for (let i = 0; i < 5; i++) {
                 const ap = aps[i];
                 if (ap) {
@@ -567,7 +567,7 @@ const AdminDashboard = () => {
                             <div className="bg-[var(--bg-card)] border border-[var(--border-subtle)] rounded-[32px] overflow-hidden shadow-2xl">
                                 <form onSubmit={handleSubmit} className="p-8 lg:p-12 space-y-10">
 
-                                    {/* Identité */}
+
                                     <div>
                                         <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Informations personnelles</p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -628,7 +628,7 @@ const AdminDashboard = () => {
 
                                     <div className="h-[1px] bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent" />
 
-                                    {/* Participation */}
+
                                     <div>
                                         <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Détails de participation</p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -759,7 +759,7 @@ const AdminDashboard = () => {
 
                                     <div className="h-[1px] bg-gradient-to-r from-transparent via-[var(--border-subtle)] to-transparent" />
 
-                                    {/* Paiement */}
+
                                     <div>
                                         <p className="text-[11px] font-black text-blue-400 uppercase tracking-[0.25em] mb-6">Paiement</p>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1065,7 +1065,7 @@ const AdminDashboard = () => {
                                         )}
                                     </div>
 
-                                    {/* Participation */}
+
                                     <div className="col-span-2 pt-2">
                                         <div className="h-[1px] bg-white/5 mb-4"></div>
                                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Participation</p>
@@ -1107,7 +1107,7 @@ const AdminDashboard = () => {
                                         <input name="nbParticipants" type="number" min="1" max="10" value={formData.nbParticipants || 1} onChange={handleInputChange} className="w-full bg-[#050B14] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-blue-500 outline-none" />
                                     </div>
 
-                                    {/* Accompagnants */}
+
                                     {formData.role !== 'exposant' && parseInt(formData.nbParticipants) > 1 && (
                                         <div className="col-span-2 space-y-3">
                                             <p className="text-[10px] font-black text-purple-400 uppercase tracking-widest">Accompagnants ({parseInt(formData.nbParticipants) - 1})</p>
@@ -1146,7 +1146,7 @@ const AdminDashboard = () => {
                                         </div>
                                     )}
 
-                                    {/* Paiement */}
+
                                     <div className="col-span-2 pt-2">
                                         <div className="h-[1px] bg-white/5 mb-4"></div>
                                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4">Paiement</p>

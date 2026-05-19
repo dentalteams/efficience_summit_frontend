@@ -8,12 +8,12 @@ const ResetPasswordPage = () => {
     const navigate = useNavigate();
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (password !== confirmPassword) {
             setStatus('error');
             setMessage('Les mots de passe ne correspondent pas.');
@@ -34,11 +34,11 @@ const ResetPasswordPage = () => {
     return (
         <div className="min-h-screen bg-slate-950 pt-32 pb-20 px-4">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(59,130,246,0.1),transparent_50%)]"></div>
-            
+
             <div className="relative max-w-md mx-auto">
                 <div className="bg-slate-900 border border-white/10 rounded-[40px] p-10 shadow-2xl overflow-hidden relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 blur-[60px] rounded-full"></div>
-                    
+
                     <div className="text-center mb-10">
                         <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-500/30">
                             <Lock className="text-blue-400 w-8 h-8" />

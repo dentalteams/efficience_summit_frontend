@@ -1,15 +1,18 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Calendar, Mail, Phone, Building, User, ArrowRight, Heart, Instagram, Facebook, Linkedin, Check, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Calendar, Mail, Phone, ArrowRight, Instagram, Facebook, Linkedin, MapPin } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
+const PARTNERS = [
+    { src: '/LOGO_stmolp.jpg', alt: 'STMOLP', name: 'STMOLP', desc: 'Société Tunisienne de Médecine Orale et Lasers en Pathologie' },
+    { src: '/logo_tunisian_acadmi.jpg', alt: 'Tunisian Academy', name: 'Tunisian Academy', desc: 'Tunisian Academy of Dental Sciences' },
+];
 
 const Footer = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
 
     return (
-
         <footer className="relative z-10">
 
 
@@ -40,18 +43,19 @@ const Footer = () => {
             <div className="bg-slate-950/95 backdrop-blur-2xl px-4 pt-16 pb-8">
                 <div className="max-w-7xl mx-auto">
 
-                    {/* Grid 4 cols */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-14">
 
-                        {/* Col 1 — Brand */}
                         <div className="lg:col-span-1">
+
                             <div className="mb-4 -mt-9">
                                 <img src="/Logo_SUMMIT.png" alt="Efficience Summit 2026" className="h-24 w-auto object-contain -ml-9" />
                             </div>
+
                             <p className="text-blue-200/70 text-sm leading-relaxed mb-6">
                                 {t('footer.description')}
                             </p>
-                            {/* Social links */}
+
+
                             <div className="flex items-center gap-3">
                                 {[
                                     { Icon: Instagram, label: 'Instagram', href: 'https://www.instagram.com/efficiencedentaire/' },
@@ -69,10 +73,30 @@ const Footer = () => {
                                         <Icon className="w-4 h-4" />
                                     </a>
                                 ))}
+
+                                <div className="w-px h-6 bg-white/10 mx-1"></div>
+
+
+                                {PARTNERS.map(({ src, alt, name, desc }, i) => (
+                                    <div
+                                        key={alt}
+                                        className="group/p relative partner-logo-nav"
+                                        style={{ animationDelay: `${i * 1.5}s` }}
+                                    >
+                                        <div className="partner-shine-wrap rounded-lg overflow-hidden border border-white/15 group-hover/p:border-blue-400/60 bg-white/95 group-hover/p:bg-white transition-all duration-300 group-hover/p:shadow-lg group-hover/p:shadow-blue-500/30 group-hover/p:scale-110 px-2 py-1">
+                                            <img src={src} alt={alt} className="h-7 w-auto object-contain" />
+                                        </div>
+                                        {/* Tooltip */}
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 px-3 py-1.5 bg-slate-900 border border-blue-500/40 rounded-lg text-[10px] text-blue-200 whitespace-nowrap opacity-0 group-hover/p:opacity-100 pointer-events-none transition-all duration-200 translate-y-1 group-hover/p:translate-y-0 shadow-2xl z-50">
+                                            {name}
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Col 2 — Navigation */}
+
                         <div>
                             <p className="text-white font-bold text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <span className="w-4 h-0.5 bg-cyan-400 inline-block"></span>
@@ -88,10 +112,7 @@ const Footer = () => {
                                     { label: t('nav.participant'), href: '/login' },
                                 ].map(({ label, href }) => (
                                     <li key={label}>
-                                        <a
-                                            href={href}
-                                            className="group flex items-center gap-2 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200"
-                                        >
+                                        <a href={href} className="group flex items-center gap-2 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200">
                                             <ArrowRight className="w-3 h-3 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
                                             {label}
                                         </a>
@@ -100,7 +121,7 @@ const Footer = () => {
                             </ul>
                         </div>
 
-                        {/* Col 3 — Infos pratiques */}
+
                         <div>
                             <p className="text-white font-bold text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <span className="w-4 h-0.5 bg-amber-400 inline-block"></span>
@@ -125,11 +146,10 @@ const Footer = () => {
                                         <p className="text-blue-300/60 text-xs">{t('footer.sea_view')}</p>
                                     </div>
                                 </li>
-
                             </ul>
                         </div>
 
-                        {/* Col 4 — Contact */}
+
                         <div>
                             <p className="text-white font-bold text-sm uppercase tracking-widest mb-6 flex items-center gap-2">
                                 <span className="w-4 h-0.5 bg-blue-400 inline-block"></span>
@@ -137,10 +157,7 @@ const Footer = () => {
                             </p>
                             <ul className="space-y-4 mb-8">
                                 <li>
-                                    <a
-                                        href="mailto:contact@efficience-summit.tn"
-                                        className="group flex items-center gap-3 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200"
-                                    >
+                                    <a href="mailto:contact@efficience-summit.tn" className="group flex items-center gap-3 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200">
                                         <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-cyan-500/10 border border-white/10 group-hover:border-cyan-400/30 flex items-center justify-center flex-shrink-0 transition-all">
                                             <Mail className="w-4 h-4" />
                                         </div>
@@ -148,10 +165,7 @@ const Footer = () => {
                                     </a>
                                 </li>
                                 <li>
-                                    <a
-                                        href="tel:+21612345678"
-                                        className="group flex items-center gap-3 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200"
-                                    >
+                                    <a href="tel:+21655980474" className="group flex items-center gap-3 text-blue-200/60 hover:text-cyan-300 text-sm transition-colors duration-200">
                                         <div className="w-8 h-8 rounded-lg bg-white/5 group-hover:bg-cyan-500/10 border border-white/10 group-hover:border-cyan-400/30 flex items-center justify-center flex-shrink-0 transition-all">
                                             <Phone className="w-4 h-4" />
                                         </div>
@@ -160,7 +174,7 @@ const Footer = () => {
                                 </li>
                             </ul>
 
-                            {/* Newsletter mini */}
+
                             <div>
                                 <p className="text-blue-300/70 text-xs mb-3">{t('footer.stay_informed')}</p>
                                 <div className="flex gap-2">
@@ -177,19 +191,16 @@ const Footer = () => {
                         </div>
                     </div>
 
-                    {/* Divider */}
-                    <div className="border-t border-white/5 pt-8">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                            <p className="text-blue-300/40 text-xs text-center md:text-left">
-                                {t('footer.rights')}
-                            </p>
 
-                        </div>
+                    <div className="border-t border-white/5 pt-8">
+                        <p className="text-blue-300/40 text-xs text-center md:text-left">
+                            {t('footer.rights')}
+                        </p>
                     </div>
                 </div>
             </div>
         </footer>
-    )
-}
+    );
+};
 
 export default Footer;
