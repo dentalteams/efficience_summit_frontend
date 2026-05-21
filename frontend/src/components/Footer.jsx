@@ -4,8 +4,8 @@ import { Calendar, Mail, Phone, ArrowRight, Instagram, Facebook, Linkedin, MapPi
 import { useTranslation } from 'react-i18next';
 
 const PARTNERS = [
-    { src: '/LOGO_stmolp.jpg', alt: 'STMOLP', name: 'STMOLP', desc: 'Société Tunisienne de Médecine Orale et Lasers en Pathologie' },
-    { src: '/logo_tunisian_acadmi.jpg', alt: 'Tunisian Academy', name: 'Tunisian Academy', desc: 'Tunisian Academy of Dental Sciences' },
+    { src: '/LOGO_stmolp.jpg', alt: 'STMOLP', name: 'STMOLP', desc: 'Syndicat Tunisien des medecins orthodontistes de libre pratique' },
+    { src: '/logo_tunisian_acadmi.jpg', alt: 'Tunisian Acadmi', name: 'Tunisian Acadmi', desc: 'Tunisian Acadmi' },
 ];
 
 const Footer = () => {
